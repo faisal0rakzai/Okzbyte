@@ -1,25 +1,15 @@
 # OkzByte About Page — Delivery Report
 
-## Implemented
+## Work completed
 
-- Cinematic About hero reusing the existing branded video, Three.js neural graphic, responsive layout, and technology/contact CTAs.
-- Editorial story sequence without invented dates or milestones; mission and vision sections.
-- Six capability cards: AI, Blockchain & Web3, Fintech, Real-World Assets, Digital Infrastructure, and Research & Development.
-- Five technology principles: Innovation, Engineering, Responsibility, Collaboration, and Long-Term Thinking.
-- Ecosystem showcase linking OrakzaiX and OKBOND as independent initiatives; no unverified ownership, operational, or technical-integration claims.
-- Faisal Orakzai founder profile using only supplied biography; no fabricated portrait, credentials, or history.
-- Commitment statement and final solutions/contact calls to action.
-- Responsive styles, route metadata description, and Vercel rewrites for existing client-side routes.
+The existing site design system now powers a full About experience: a cinematic hero with the site's existing video and Three.js neural graphic; a story sequence without invented milestones; mission and vision; six capability cards; five technology principles; a qualified showcase for OrakzaiX and OKBOND as independent initiatives; the supplied Faisal Orakzai biography; a commitment section; and final solutions/contact calls to action. Responsive styles, About metadata, and Vercel rewrites for the site's client-side routes were added. No fictional portrait, credentials, ownership claim, or fabricated history was introduced.
 
-## Validation
+## Verification and delivery
 
-- `npm ci --no-audit --no-fund`: passed.
-- `npm run build`: passed. Vite reports a large JavaScript bundle warning (~801 kB minified) and harmless dependency directive warnings.
-- `vercel.json`: valid JSON; includes `/about` and other application routes.
+`npm ci --no-audit --no-fund`, `npm run build`, `git diff --check`, and JSON validation passed. The rendered local `/about` page showed the hero video and Three.js canvas, all six capability cards, all five philosophy headings, and no desktop horizontal overflow. The full-page About page screenshot is available at [desktop About screenshot](/home/ubuntu/screenshots/5174-iznag7gjzmn0uyd_2026-11-14_19-04-04_7215.webp).
 
-## Remaining checks / blockers
+The work was pushed to `main` at commit `87f3b4f8f6c392b782be540bfcf76d73e4f0f710`. The public homepage responds successfully, but the requested public URL `https://okzbyte.vercel.app/about` still returns Vercel `404 NOT_FOUND` after the push. Therefore a publicly working About URL is not confirmed; the deployment/route needs follow-up in the Vercel project. The committed rewrite is intended to address direct SPA routes.
 
-- The public site was observed returning Vercel `404 NOT_FOUND` at `/about` before this change. The rewrite is intended to resolve direct route access after deployment; the live route must be rechecked after Vercel processes the push.
-- No approved authentic founder portrait was found in the repository, so the section uses a typographic mark rather than a generated or fictional photo.
-- No new video/3D assets were created; existing site video and genuine Three.js neural artwork are reused.
-- Contact form delivery remains a pre-existing prototype limitation noted on the contact page.
+## Remaining limitations
+
+No approved authentic founder portrait existed in the repository, so the profile uses a typographic mark. Existing site video and genuine Three.js artwork are reused rather than claiming new media assets. The contact form remains a prototype and does not deliver messages to a backend, as noted by the existing page.
