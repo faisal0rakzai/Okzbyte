@@ -1,4 +1,4 @@
 
-## Light balance tuning
+## Red-marked showcase placement and hero brightness
 
-The WebGL neural graphic glow was reduced by roughly 40% on desktop and mobile. Hero video brightness was raised by roughly 30%, with the showcase video lifted as well, so the supplied footage reads clearly without letting the green wireframe dominate the composition.
+The Drive screenshot was inspected. The second video is now placed as a full-width visual panel at the top of the Innovation Showcase section, directly above the `02 / INNOVATION SHOWCASE` label, matching the red-marked area. The hero video's effective brightness was increased another ~30% while keeping the brand tint and text-safe overlays.
