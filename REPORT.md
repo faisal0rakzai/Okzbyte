@@ -10,6 +10,6 @@ The existing site design system includes a cinematic hero with the site's video 
 
 ## Verification and delivery status
 
-The project production build passes. `git diff --check` passes, image assets decode successfully, and local HTTP checks return the five portrait assets from the site. Browser inspection confirms the About route displays Faisal and the named leadership grid without horizontal overflow. The three latest user-request changes are committed locally; push status will be confirmed separately.
+The project production build passes. `git diff --check` passes, image assets decode successfully, and local HTTP checks return the five portrait assets from the site. Browser inspection confirms the About route displays Faisal and the named leadership grid without horizontal overflow. The Drive-folder executive-team addition is committed locally as `48aba11`; pushing it with the current GitHub session failed with HTTP 403 (write access denied).
 
 Earlier About work and Faisal’s Co-Founder & CEO portrait/title are on GitHub `main` through commit `87e72145d23ec292c7d6c6894606da2cef9a5dbf`. At last public check, `https://okzbyte.vercel.app/about` returned Vercel `404 NOT_FOUND`; public deployment is still not confirmed. The contact form remains a prototype without backend delivery.
