@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { lazy, Suspense, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import * as THREE from 'three';
 import { ArrowUpRight, Menu, X, MoveUpRight, Cpu, Blocks, Landmark, Network, Code2, Workflow, ShieldCheck, Scale, Sparkles, Mail, CheckCircle2 } from 'lucide-react';
 import './styles.css';
+const TechnologiesPage = lazy(() => import('./TechnologiesPage.jsx'));
 
 const nav = [['About','/about'],['Technologies','/technologies'],['Solutions','/solutions'],['Research','/research'],['Ecosystem','/ecosystem']];
 const technology = [
@@ -41,7 +42,7 @@ function Legal({kind}){return <><PageHero eyebrow={kind==='privacy'?'LEGAL / PRI
 const seo = {
   '/': ['OkzByte — Engineering Intelligence', 'OkzByte builds intelligent technologies, decentralized systems and digital infrastructure for the next generation of innovation.'],
   '/about': ['About OkzByte — Engineering Digital Intelligence', 'Discover OkzByte’s story, mission, vision, technology fields, principles, ecosystem initiatives, and founder.'],
-  '/technologies': ['Technologies — OkzByte', 'Explore OkzByte capabilities across AI, blockchain, digital finance, RWA, cloud infrastructure and software engineering.'],
+  '/technologies': ['Technologies | AI, Blockchain, Web3 & Digital Infrastructure | OkzByte', 'Explore OkzByte’s technology domains, including artificial intelligence, blockchain, Web3, fintech, real-world assets, cloud infrastructure, data engineering and emerging digital systems.'],
   '/solutions': ['Solutions — OkzByte', 'OkzByte turns complex technology problems into clear, scalable digital systems.'],
   '/products': ['Products & Platforms — OkzByte', 'Product thinking and technology foundations for ambitious digital experiences.'],
   '/research': ['Research & Ideas — OkzByte', 'Technology research, engineering concepts and ideas from the OkzByte ecosystem.'],
@@ -50,6 +51,50 @@ const seo = {
   '/privacy': ['Privacy Policy — OkzByte', 'OkzByte privacy policy and information practices.'],
   '/terms': ['Terms of Service — OkzByte', 'OkzByte terms of service and website usage information.']
 };
-function App(){const [path,setPath]=useState(window.location.pathname); useEffect(()=>{const on=()=>setPath(window.location.pathname);window.addEventListener('popstate',on);const click=e=>{const a=e.target.closest('a');if(a&&a.origin===location.origin&&!a.target){e.preventDefault();history.pushState({},'',a.pathname);setPath(a.pathname);window.scrollTo(0,0)}};document.addEventListener('click',click);return()=>{window.removeEventListener('popstate',on);document.removeEventListener('click',click)}},[]); useEffect(()=>{const [title,description]=seo[path]||seo['/'];document.title=title;const upsert=(selector,attrs)=>{let el=document.head.querySelector(selector);if(!el){el=document.createElement('meta');document.head.appendChild(el)}Object.entries(attrs).forEach(([k,v])=>el.setAttribute(k,v))};upsert('meta[name=description]',{name:'description',content:description});upsert('meta[property="og:title"]',{property:'og:title',content:title});upsert('meta[property="og:description"]',{property:'og:description',content:description});upsert('meta[property="og:image"]',{property:'og:image',content:'/og-cover.svg'});let canonical=document.head.querySelector('link[rel=canonical]');if(!canonical){canonical=document.createElement('link');canonical.rel='canonical';document.head.appendChild(canonical)}canonical.href=`https://okzbyte.com${path==='/'?'':path}`;let ld=document.getElementById('okzbyte-structured-data');if(!ld){ld=document.createElement('script');ld.id='okzbyte-structured-data';ld.type='application/ld+json';document.head.appendChild(ld)}ld.textContent=JSON.stringify({'@context':'https://schema.org','@type':'Organization',name:'OkzByte',url:'https://okzbyte.com',description:'Technology venture building intelligent software, decentralized systems and digital infrastructure.',logo:'https://okzbyte.com/logo.png'});},[path]); let content=path==='/'?<Home/>:path==='/about'?<AboutPage/>:path==='/contact'?<Contact/>:path==='/admin'?<Admin/>:path==='/privacy'||path==='/terms'?<Legal kind={path.slice(1)}/>:<StandardPage type={path.slice(1) in {about:1,technologies:1,solutions:1,products:1,research:1,ecosystem:1}?path.slice(1):'about'}/>; return <><ScrollProgress/><Header/>{content}<Footer/></>}
-
+function App(){
+ const [path,setPath]=useState(window.location.pathname);
+ useEffect(()=>{
+  const on=()=>setPath(window.location.pathname);
+  window.addEventListener('popstate',on);
+  const click=e=>{
+   const a=e.target.closest('a');
+   if(a&&a.origin===location.origin&&!a.target&&!a.hash){
+    e.preventDefault();history.pushState({},'',a.pathname);setPath(a.pathname);window.scrollTo(0,0)
+   }
+  };
+  document.addEventListener('click',click);
+  return()=>{window.removeEventListener('popstate',on);document.removeEventListener('click',click)}
+ },[]);
+ useEffect(()=>{
+  const [title,description]=seo[path]||seo['/'];
+  document.title=title;
+  const upsert=(selector,tag,attrs)=>{
+   let el=document.head.querySelector(selector);
+   if(!el){el=document.createElement(tag);document.head.appendChild(el)}
+   Object.entries(attrs).forEach(([k,v])=>el.setAttribute(k,v));
+  };
+  upsert('meta[name=description]','meta',{name:'description',content:description});
+  upsert('meta[property="og:title"]','meta',{property:'og:title',content:title});
+  upsert('meta[property="og:description"]','meta',{property:'og:description',content:description});
+  upsert('meta[property="og:type"]','meta',{property:'og:type',content:'website'});
+  upsert('meta[property="og:image"]','meta',{property:'og:image',content:'https://okzbyte.vercel.app/og-cover.svg'});
+  upsert('meta[name="twitter:card"]','meta',{name:'twitter:card',content:'summary_large_image'});
+  upsert('meta[name="twitter:title"]','meta',{name:'twitter:title',content:title});
+  upsert('meta[name="twitter:description"]','meta',{name:'twitter:description',content:description});
+  upsert('meta[name="twitter:image"]','meta',{name:'twitter:image',content:'https://okzbyte.vercel.app/og-cover.svg'});
+  const canonicalUrl=path==='/technologies'?'https://okzbyte.vercel.app/technologies':`https://okzbyte.com${path==='/'?'':path}`;
+  upsert('link[rel=canonical]','link',{rel:'canonical',href:canonicalUrl});
+  upsert('meta[property="og:url"]','meta',{property:'og:url',content:canonicalUrl});
+  let ld=document.getElementById('okzbyte-structured-data');
+  if(!ld){ld=document.createElement('script');ld.id='okzbyte-structured-data';ld.type='application/ld+json';document.head.appendChild(ld)}
+  ld.textContent=JSON.stringify({'@context':'https://schema.org','@type':'Organization',name:'OkzByte',url:'https://okzbyte.com',description:'Technology venture building intelligent software, decentralized systems and digital infrastructure.',logo:'https://okzbyte.com/logo.png'});
+  let pageData=document.getElementById('okzbyte-page-data');
+  if(path==='/technologies'){
+   if(!pageData){pageData=document.createElement('script');pageData.id='okzbyte-page-data';pageData.type='application/ld+json';document.head.appendChild(pageData)}
+   pageData.textContent=JSON.stringify({'@context':'https://schema.org','@type':'WebPage',name:title,description,url:canonicalUrl,publisher:{'@type':'Organization',name:'OkzByte',url:'https://okzbyte.com'},about:['Artificial intelligence','Blockchain technology','Web3','Financial technology','Real-world assets','Cloud infrastructure','Data engineering','Cybersecurity','Internet of Things','Robotics and automation'].map(name=>({'@type':'Thing',name}))});
+  }else if(pageData){pageData.remove()}
+ },[path]);
+ let content=path==='/'?<Home/>:path==='/about'?<AboutPage/>:path==='/technologies'?<Suspense fallback={<div className="tech-page-loading" aria-label="Loading technologies"/>}><TechnologiesPage/></Suspense>:path==='/contact'?<Contact/>:path==='/admin'?<Admin/>:path==='/privacy'||path==='/terms'?<Legal kind={path.slice(1)}/>:<StandardPage type={path.slice(1) in {solutions:1,products:1,research:1,ecosystem:1}?path.slice(1):'about'}/>;
+ return <><ScrollProgress/><Header/>{content}<Footer/></>
+}
 createRoot(document.getElementById('root')).render(<App/>);
