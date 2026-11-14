@@ -1,4 +1,4 @@
 
-## Mobile hero composition fix
+## User-provided hero video
 
-The supplied mobile screenshot exposed a real hierarchy problem: the 3D mesh was competing with the headline, supporting paragraph, and CTA. The mobile composition now moves the mesh lower and right, reduces its opacity, adds a dark text-safe gradient, keeps copy above the visual layer, and places a compact live system card near the lower hero rail. This preserves the 3D effect without sacrificing readability.
+The supplied 31-second 16:9 MP4 is now integrated as a muted, autoplaying, looping hero background with a poster fallback. A web-optimized copy is stored at `public/okzbyte-hero.mp4`; audio was removed for background use, and the image was darkened/desaturated with a subtle green balance and vignette. CSS overlays preserve readable OkzByte typography and the existing WebGL layer remains above the video as a lighter brand treatment.
