@@ -1,15 +1,15 @@
 # OkzByte About Page — Delivery Report
 
-## Work completed
+## Leadership setup
 
-The existing site design system now powers the About experience: cinematic hero with existing video and Three.js artwork; company story, mission, and vision; six capability cards; five technology principles; an accurately qualified independent-initiatives showcase; latest user-selected founder portrait and Co-Founder & CEO title supplied by the user; commitment statement; and closing calls to action. Responsive styles, About metadata, and Vercel rewrites for the site's client-side routes are included.
+The shared Drive folder “Okzbyte Team” contained four portraits matching the supplied filenames: Ken Lim (CTO), Shirlyn Ng (COO), Umeet Shah (CFO), and Steven Scheurmann (CMO & CISO). Faisal Orakzai’s portrait was supplied separately. The About page presents Faisal first as Co-Founder & CEO, followed by a four-card executive leadership section using the Drive images and exact titles provided. All five images are stored in `public/` and used as local website assets.
 
-## Verification and delivery
+## Wider About-page implementation
 
-The implementation passed `npm run build`, `git diff --check`, JSON validation, and local browser rendering. The founder portrait has now been replaced with the user’s preferred supplied photo.
+The existing site design system includes a cinematic hero with the site's video and Three.js artwork; company story without invented milestones; mission and vision; six capability cards; five technology principles; accurately qualified independent-project links for OrakzaiX and OKBOND; founder biography and portrait; commitment statement; and solutions/contact calls to action. Responsive styles, About metadata, and Vercel rewrites for the site's client-side routes were added.
 
-Earlier code was pushed to `main` at `820cdf2575328ce159204041f1bde6d50e7ae888`. The previous photo/title change and this image replacement are local commits pending GitHub write access. The public homepage worked, but `/about` returned Vercel `404 NOT_FOUND` at last verification; deployment is not confirmed.
+## Verification and delivery status
 
-## Remaining limitations
+The project production build passes. `git diff --check` passes, image assets decode successfully, and local HTTP checks return the five portrait assets from the site. Browser inspection confirms the About route displays Faisal and the named leadership grid without horizontal overflow. The three latest user-request changes are committed locally; push status will be confirmed separately.
 
-The contact form remains a prototype and does not deliver messages to a backend. The site's existing video and Three.js artwork are reused.
+Earlier About work and Faisal’s Co-Founder & CEO portrait/title are on GitHub `main` through commit `87e72145d23ec292c7d6c6894606da2cef9a5dbf`. At last public check, `https://okzbyte.vercel.app/about` returned Vercel `404 NOT_FOUND`; public deployment is still not confirmed. The contact form remains a prototype without backend delivery.
