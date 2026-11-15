@@ -9,18 +9,178 @@ const port = Number(process.env.PORT || 3000);
 const limits = new Map();
 const sessions = new Map();
 const SESSION_TTL = 8 * 60 * 60 * 1000;
-const categories = new Set(['AI & Automation','Blockchain & Web3','Fintech & Digital Finance','RWA & PropTech','Software Development','Strategic Collaboration','General Inquiry']);
-const json = (res, status, body) => { res.writeHead(status, {'content-type':'application/json; charset=utf-8','cache-control':'no-store'}); res.end(JSON.stringify(body)); };
-const security = res => { res.setHeader('x-content-type-options','nosniff'); res.setHeader('x-frame-options','DENY'); res.setHeader('referrer-policy','strict-origin-when-cross-origin'); res.setHeader('content-security-policy',"default-src 'self'; img-src 'self' data: https://images.unsplash.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self'"); };
-const body = req => new Promise((resolve,reject)=>{let data=''; req.on('data',chunk=>{data+=chunk;if(data.length>100_000) reject(new Error('payload_too_large'))}); req.on('end',()=>{try{resolve(JSON.parse(data||'{}'))}catch{reject(new Error('invalid_json'))}}); req.on('error',reject)});
-const clean = value => String(value ?? '').replace(/[<>]/g,'').trim();
+const categories = new Set(['AI & Automation', 'Blockchain & Web3', 'Fintech & Digital Finance', 'RWA & PropTech', 'Software Development', 'Strategic Collaboration', 'General Inquiry']);
+const researchAreas = new Set(['Artificial Intelligence', 'Blockchain & Web3', 'Fintech & Digital Finance', 'Real-World Assets', 'Cloud & Digital Infrastructure', 'Cybersecurity', 'Emerging Technologies', 'Scientific & Technical Papers']);
+const submissionTypes = new Set(['Collaboration inquiry', 'Technical paper proposal', 'Research contribution', 'Expert commentary']);
+const json = (res, status, data) => { res.writeHead(status, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' }); res.end(JSON.stringify(data)); };
+const security = res => {
+  res.setHeader('x-content-type-options', 'nosniff');
+  res.setHeader('x-frame-options', 'DENY');
+  res.setHeader('referrer-policy', 'strict-origin-when-cross-origin');
+  res.setHeader('content-security-policy', "default-src 'self'; img-src 'self' data: https://images.unsplash.com https://zenodo.org; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self'");
+};
+const body = req => new Promise((resolve, reject) => {
+  let data = '';
+  req.on('data', chunk => { data += chunk; if (data.length > 100_000) reject(new Error('payload_too_large')); });
+  req.on('end', () => { try { resolve(JSON.parse(data || '{}')); } catch { reject(new Error('invalid_json')); } });
+  req.on('error', reject);
+});
+const clean = value => String(value ?? '').replace(/[<>]/g, '').trim();
+const validEmail = value => value.length <= 254 && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(value);
 const clientKey = req => (req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown').split(',')[0];
-const cookies = req => Object.fromEntries((req.headers.cookie || '').split(';').filter(Boolean).map(item => { const [key,...value] = item.trim().split('='); return [key, decodeURIComponent(value.join('='))]; }));
-const sessionFor = req => { const token = cookies(req).okz_session; const session = token && sessions.get(token); if (!session || session.expires < Date.now()) { if(token) sessions.delete(token); return null; } return session; };
-const verifyPassword = (password, encoded) => { const [scheme,n,r,p,saltHex,hashHex] = String(encoded || '').split('$'); if(scheme !== 'scrypt' || !n || !r || !p || !saltHex || !hashHex) return false; try { const derived = crypto.scryptSync(password, Buffer.from(saltHex,'hex'), Buffer.from(hashHex,'hex').length, {N:Number(n),r:Number(r),p:Number(p),maxmem:64*1024*1024}); return crypto.timingSafeEqual(derived, Buffer.from(hashHex,'hex')); } catch { return false; } };
-async function adminLogin(req,res){ if(!process.env.ADMIN_EMAIL || !process.env.ADMIN_PASSWORD_HASH) return json(res,503,{ok:false,error:'admin_not_configured'}); let input; try{input=await body(req)}catch(e){return json(res,400,{ok:false,error:e.message})} const email=clean(input.email).toLowerCase(); const password=String(input.password || ''); if(email !== process.env.ADMIN_EMAIL.toLowerCase() || !verifyPassword(password,process.env.ADMIN_PASSWORD_HASH)) return json(res,401,{ok:false,error:'invalid_credentials'}); const token=crypto.randomBytes(32).toString('base64url'); sessions.set(token,{email,expires:Date.now()+SESSION_TTL}); res.writeHead(200,{'content-type':'application/json; charset=utf-8','cache-control':'no-store','set-cookie':`okz_session=${token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${SESSION_TTL/1000}${process.env.NODE_ENV==='production'?'; Secure':''}`}); return res.end(JSON.stringify({ok:true,email})); }
-function adminLogout(req,res){ const token=cookies(req).okz_session; if(token) sessions.delete(token); res.writeHead(200,{'content-type':'application/json; charset=utf-8','cache-control':'no-store','set-cookie':'okz_session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0'}); res.end(JSON.stringify({ok:true})); }
-async function contact(req,res){const key=clientKey(req), now=Date.now(), recent=limits.get(key)||[]; const active=recent.filter(t=>now-t<3_600_000); if(active.length>=5)return json(res,429,{ok:false,error:'rate_limited'}); let input; try{input=await body(req)}catch(e){return json(res,400,{ok:false,error:e.message})} const name=clean(input.name), email=clean(input.email).toLowerCase(), organization=clean(input.organization), category=clean(input.category), message=clean(input.message); if(name.length<2||name.length>120||!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)||email.length>254||!categories.has(category)||message.length<10||message.length>5000||input.consent!==true)return json(res,422,{ok:false,error:'validation_failed'}); active.push(now);limits.set(key,active); if(!process.env.DATABASE_URL)return json(res,503,{ok:false,error:'contact_backend_not_configured',message:'DATABASE_URL is required before inquiries can be stored.'}); try{const {Client}=await import('pg');const db=new Client({connectionString:process.env.DATABASE_URL,ssl:process.env.NODE_ENV==='production'?{rejectUnauthorized:false}:undefined});await db.connect();await db.query('INSERT INTO contact_inquiries (name,email,organization,category,message,client_fingerprint) VALUES ($1,$2,$3,$4,$5,$6)',[name,email,organization||null,category,message,crypto.createHash('sha256').update(key).digest('hex')]);await db.end();return json(res,201,{ok:true})}catch(error){console.error('contact_insert_failed',error);return json(res,500,{ok:false,error:'storage_failed'})}}
-async function staticFile(pathname,res){const safe=normalize(pathname).replace(/^([.][.][/\\])+/, '');const file=join(root,'dist',safe==='/'?'index.html':safe);try{const data=await readFile(file);const type={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.png':'image/png','.svg':'image/svg+xml','.json':'application/json'}[extname(file)]||'application/octet-stream';res.writeHead(200,{'content-type':type});res.end(data)}catch{try{const data=await readFile(join(root,'dist','index.html'));res.writeHead(200,{'content-type':'text/html; charset=utf-8'});res.end(data)}catch{json(res,404,{ok:false,error:'not_found'})}}}
-const server=http.createServer(async(req,res)=>{security(res);if(req.method==='GET'&&req.url==='/api/health')return json(res,200,{ok:true,databaseConfigured:Boolean(process.env.DATABASE_URL),adminConfigured:Boolean(process.env.ADMIN_EMAIL&&process.env.ADMIN_PASSWORD_HASH)});if(req.method==='GET'&&req.url==='/api/admin/session'){const session=sessionFor(req);return json(res,200,{ok:Boolean(session),email:session?.email||null});}if(req.method==='POST'&&req.url==='/api/admin/login')return adminLogin(req,res);if(req.method==='POST'&&req.url==='/api/admin/logout')return adminLogout(req,res);if(req.method==='POST'&&req.url==='/api/contact')return contact(req,res);if(req.method==='OPTIONS'){res.writeHead(204);return res.end()}return staticFile((req.url||'/').split('?')[0],res)});
-server.listen(port,'0.0.0.0',()=>console.log(`OkzByte server listening on ${port}`));
+const cookies = req => Object.fromEntries((req.headers.cookie || '').split(';').filter(Boolean).map(item => { const [key, ...value] = item.trim().split('='); return [key, decodeURIComponent(value.join('='))]; }));
+const sessionFor = req => { const token = cookies(req).okz_session; const session = token && sessions.get(token); if (!session || session.expires < Date.now()) { if (token) sessions.delete(token); return null; } return session; };
+const verifyPassword = (password, encoded) => {
+  const [scheme, n, r, p, saltHex, hashHex] = String(encoded || '').split('$');
+  if (scheme !== 'scrypt' || !n || !r || !p || !saltHex || !hashHex) return false;
+  try { const derived = crypto.scryptSync(password, Buffer.from(saltHex, 'hex'), Buffer.from(hashHex, 'hex').length, { N: Number(n), r: Number(r), p: Number(p), maxmem: 64 * 1024 * 1024 }); return crypto.timingSafeEqual(derived, Buffer.from(hashHex, 'hex')); } catch { return false; }
+};
+async function withDatabase(fn) {
+  if (!process.env.DATABASE_URL) throw Object.assign(new Error('database_not_configured'), { code: 'DATABASE_NOT_CONFIGURED' });
+  const { Client } = await import('pg');
+  const db = new Client({ connectionString: process.env.DATABASE_URL, ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : undefined });
+  await db.connect();
+  try { return await fn(db); } finally { await db.end(); }
+}
+async function adminLogin(req, res) {
+  if (!process.env.ADMIN_EMAIL || !process.env.ADMIN_PASSWORD_HASH) return json(res, 503, { ok: false, error: 'admin_not_configured' });
+  let input; try { input = await body(req); } catch (error) { return json(res, 400, { ok: false, error: error.message }); }
+  const email = clean(input.email).toLowerCase(), password = String(input.password || '');
+  if (email !== process.env.ADMIN_EMAIL.toLowerCase() || !verifyPassword(password, process.env.ADMIN_PASSWORD_HASH)) return json(res, 401, { ok: false, error: 'invalid_credentials' });
+  const token = crypto.randomBytes(32).toString('base64url'); sessions.set(token, { email, expires: Date.now() + SESSION_TTL });
+  res.writeHead(200, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', 'set-cookie': `okz_session=${token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${SESSION_TTL / 1000}${process.env.NODE_ENV === 'production' ? '; Secure' : ''}` });
+  return res.end(JSON.stringify({ ok: true, email }));
+}
+function adminLogout(req, res) {
+  const token = cookies(req).okz_session; if (token) sessions.delete(token);
+  res.writeHead(200, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', 'set-cookie': 'okz_session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0' }); res.end(JSON.stringify({ ok: true }));
+}
+async function contact(req, res) {
+  const key = clientKey(req), now = Date.now(), recent = limits.get(key) || [], active = recent.filter(time => now - time < 3_600_000);
+  if (active.length >= 5) return json(res, 429, { ok: false, error: 'rate_limited' });
+  let input; try { input = await body(req); } catch (error) { return json(res, 400, { ok: false, error: error.message }); }
+  const name = clean(input.name), email = clean(input.email).toLowerCase(), organization = clean(input.organization), category = clean(input.category), message = clean(input.message);
+  if (name.length < 2 || name.length > 120 || !validEmail(email) || !categories.has(category) || message.length < 10 || message.length > 5000 || input.consent !== true) return json(res, 422, { ok: false, error: 'validation_failed' });
+  active.push(now); limits.set(key, active);
+  try {
+    await withDatabase(db => db.query('INSERT INTO contact_inquiries (name,email,organization,category,message,client_fingerprint) VALUES ($1,$2,$3,$4,$5,$6)', [name, email, organization || null, category, message, crypto.createHash('sha256').update(key).digest('hex')]));
+    return json(res, 201, { ok: true });
+  } catch (error) { if (error.code === 'DATABASE_NOT_CONFIGURED') return json(res, 503, { ok: false, error: 'contact_backend_not_configured', message: 'DATABASE_URL is required before inquiries can be stored.' }); console.error('contact_insert_failed', error); return json(res, 500, { ok: false, error: 'storage_failed' }); }
+}
+function researchWindow(req) {
+  const url = new URL(req.url, 'http://localhost');
+  const values = [];
+  let where = "status = 'published'";
+  const bind = value => { values.push(value); return `$${values.length}`; };
+  const search = clean(url.searchParams.get('q')).slice(0, 160);
+  if (search) { const term = bind(`%${search}%`); where += ` AND (title ILIKE ${term} OR COALESCE(subtitle,'') ILIKE ${term} OR COALESCE(abstract,'') ILIKE ${term} OR excerpt ILIKE ${term} OR content ILIKE ${term} OR COALESCE(author,'') ILIKE ${term} OR array_to_string(keywords, ' ') ILIKE ${term})`; }
+  const category = clean(url.searchParams.get('category')).slice(0, 100);
+  if (category) where += ` AND category = ${bind(category)}`;
+  const type = clean(url.searchParams.get('contentType')).slice(0, 80);
+  if (type) where += ` AND content_type = ${bind(type)}`;
+  const year = clean(url.searchParams.get('year'));
+  if (/^\d{4}$/.test(year)) where += ` AND EXTRACT(YEAR FROM published_at)::int = ${bind(Number(year))}`;
+  const author = clean(url.searchParams.get('author')).slice(0, 120);
+  if (author) where += ` AND author = ${bind(author)}`;
+  const page = Math.max(1, Math.min(1000, Number.parseInt(url.searchParams.get('page') || '1', 10) || 1));
+  const pageSize = Math.max(1, Math.min(48, Number.parseInt(url.searchParams.get('limit') || '12', 10) || 12));
+  const sort = url.searchParams.get('sort');
+  const order = sort === 'oldest' ? 'published_at ASC NULLS LAST, title ASC' : sort === 'alphabetical' ? 'LOWER(title) ASC, published_at DESC NULLS LAST' : 'published_at DESC NULLS LAST, title ASC';
+  return { where, values, page, pageSize, order };
+}
+async function researchList(req, res) {
+  const filter = researchWindow(req);
+  try {
+    const result = await withDatabase(async db => {
+      const count = await db.query(`SELECT COUNT(*)::int AS total FROM research_articles WHERE ${filter.where}`, filter.values);
+      const offset = (filter.page - 1) * filter.pageSize, limitPosition = filter.values.length + 1, offsetPosition = filter.values.length + 2;
+      const rows = await db.query(`SELECT slug,title,subtitle,author,excerpt,abstract,cover_image_url,published_at,updated_at,category,content_type,keywords,doi,external_url,pdf_url,seo_title,seo_description FROM research_articles WHERE ${filter.where} ORDER BY ${filter.order} LIMIT $${limitPosition} OFFSET $${offsetPosition}`, [...filter.values, filter.pageSize, offset]);
+      const [categoryCounts, authors, years, featured] = await Promise.all([
+        db.query("SELECT category, COUNT(*)::int AS count FROM research_articles WHERE status='published' AND category IS NOT NULL GROUP BY category"),
+        db.query("SELECT DISTINCT author FROM research_articles WHERE status='published' AND author IS NOT NULL AND author <> '' ORDER BY author LIMIT 300"),
+        db.query("SELECT DISTINCT EXTRACT(YEAR FROM published_at)::int AS year FROM research_articles WHERE status='published' AND published_at IS NOT NULL ORDER BY year DESC LIMIT 30"),
+        db.query("SELECT slug,title,subtitle,author,excerpt,abstract,cover_image_url,published_at,updated_at,category,content_type,keywords,doi,external_url,pdf_url,seo_title,seo_description FROM research_articles WHERE status='published' AND is_featured=TRUE LIMIT 1"),
+      ]);
+      return { rows: rows.rows, total: count.rows[0].total, featured: featured.rows[0] || null, categoryCounts: Object.fromEntries(categoryCounts.rows.map(row => [row.category, row.count])), facets: { authors: authors.rows.map(row => row.author), years: years.rows.map(row => row.year) } };
+    });
+    return json(res, 200, { ok: true, items: result.rows, total: result.total, page: filter.page, pageSize: filter.pageSize, categoryCounts: result.categoryCounts, facets: result.facets, featured: result.featured });
+  } catch (error) {
+    if (error.code === 'DATABASE_NOT_CONFIGURED') return json(res, 503, { ok: false, error: 'research_database_not_configured', message: 'The research CMS database is not connected.' });
+    if (error.code === '42P01' || error.code === '42703') return json(res, 503, { ok: false, error: 'research_schema_not_ready', message: 'The research platform database migration must be applied before the published library is available.' });
+    console.error('research_list_failed', error); return json(res, 500, { ok: false, error: 'research_query_failed' });
+  }
+}
+async function researchArticle(slug, res) {
+  if (!/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,159}$/.test(slug)) return json(res, 404, { ok: false, error: 'not_found' });
+  try {
+    const article = await withDatabase(async db => {
+      const result = await db.query("SELECT id,slug,title,subtitle,author,excerpt,abstract,content,cover_image_url,cover_alt,cover_caption,published_at,updated_at,category,content_type,keywords,doi,external_url,pdf_url,references_json,seo_title,seo_description FROM research_articles WHERE slug=$1 AND status='published' LIMIT 1", [slug]);
+      if (!result.rows[0]) return null;
+      const article = result.rows[0];
+      const related = await db.query("SELECT slug,title,subtitle,author,excerpt,abstract,cover_image_url,published_at,updated_at,category,content_type,keywords,doi,external_url,pdf_url FROM research_articles WHERE status='published' AND slug<>$1 AND category IS NOT DISTINCT FROM $2 ORDER BY published_at DESC NULLS LAST LIMIT 3", [slug, article.category]);
+      return { article, related: related.rows };
+    });
+    if (!article) return json(res, 404, { ok: false, error: 'not_found' });
+    return json(res, 200, { ok: true, article: article.article, related: article.related });
+  } catch (error) {
+    if (error.code === 'DATABASE_NOT_CONFIGURED') return json(res, 503, { ok: false, error: 'research_database_not_configured', message: 'The research CMS database is not connected.' });
+    if (error.code === '42P01' || error.code === '42703') return json(res, 503, { ok: false, error: 'research_schema_not_ready', message: 'The research platform database migration must be applied first.' });
+    console.error('research_article_failed', error); return json(res, 500, { ok: false, error: 'research_query_failed' });
+  }
+}
+function rateLimit(req, res, bucket, maximum = 3) {
+  const key = `${bucket}:${clientKey(req)}`, now = Date.now(), active = (limits.get(key) || []).filter(time => now - time < 3_600_000);
+  if (active.length >= maximum) { json(res, 429, { ok: false, error: 'rate_limited', message: 'Please try again later.' }); return false; }
+  active.push(now); limits.set(key, active); return true;
+}
+async function researchSubmission(req, res) {
+  if (!rateLimit(req, res, 'research-submission')) return;
+  let input; try { input = await body(req); } catch (error) { return json(res, 400, { ok: false, error: error.message }); }
+  const name = clean(input.name), email = clean(input.email).toLowerCase(), organization = clean(input.organization), area = clean(input.researchArea), type = clean(input.submissionType), proposal = clean(input.proposal), url = clean(input.externalUrl);
+  if (name.length < 2 || name.length > 120 || !validEmail(email) || organization.length > 180 || !researchAreas.has(area) || !submissionTypes.has(type) || proposal.length < 30 || proposal.length > 6000 || input.consent !== 'true' && input.consent !== true || url && (!/^https:\/\//i.test(url) || url.length > 2048)) return json(res, 422, { ok: false, error: 'validation_failed' });
+  try {
+    const result = await withDatabase(db => db.query('INSERT INTO research_submissions (name,email,organization,research_area,submission_type,proposal,external_url) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id', [name, email, organization || null, area, type, proposal, url || null]));
+    return json(res, 201, { ok: true, id: result.rows[0].id, status: 'new' });
+  } catch (error) {
+    if (error.code === 'DATABASE_NOT_CONFIGURED') return json(res, 503, { ok: false, error: 'research_database_not_configured', message: 'Research proposal storage is not configured.' });
+    if (error.code === '42P01') return json(res, 503, { ok: false, error: 'research_schema_not_ready', message: 'The research platform database migration must be applied before proposals can be stored.' });
+    console.error('research_submission_failed', error); return json(res, 500, { ok: false, error: 'storage_failed' });
+  }
+}
+async function newsletterSubscription(req, res) {
+  if (!rateLimit(req, res, 'research-newsletter', 5)) return;
+  let input; try { input = await body(req); } catch (error) { return json(res, 400, { ok: false, error: error.message }); }
+  const email = clean(input.email).toLowerCase(), topics = Array.isArray(input.topics) ? input.topics.filter(topic => researchAreas.has(clean(topic))).slice(0, 8) : [];
+  if (!validEmail(email) || input.consent !== true) return json(res, 422, { ok: false, error: 'validation_failed' });
+  try {
+    const result = await withDatabase(db => db.query("INSERT INTO research_newsletter_subscribers (email,topics,status) VALUES ($1,$2,'pending_confirmation') ON CONFLICT (email) DO UPDATE SET topics=EXCLUDED.topics, consent_at=NOW(), status=CASE WHEN research_newsletter_subscribers.status='subscribed' THEN 'subscribed' ELSE 'pending_confirmation' END RETURNING status", [email, topics]));
+    const status = result.rows[0].status;
+    return json(res, 201, { ok: true, status, message: status === 'pending_confirmation' ? 'Your request is recorded as pending; email confirmation is not configured, so you are not yet subscribed.' : 'Your existing subscription remains active.' });
+  } catch (error) {
+    if (error.code === 'DATABASE_NOT_CONFIGURED') return json(res, 503, { ok: false, error: 'research_database_not_configured', message: 'Newsletter storage is not configured.' });
+    if (error.code === '42P01') return json(res, 503, { ok: false, error: 'research_schema_not_ready', message: 'The research platform database migration must be applied before newsletter requests can be stored.' });
+    console.error('newsletter_subscription_failed', error); return json(res, 500, { ok: false, error: 'storage_failed' });
+  }
+}
+async function staticFile(pathname, res) {
+  const safe = normalize(pathname).replace(/^([.][.][/\\])+/, ''), file = join(root, 'dist', safe === '/' ? 'index.html' : safe);
+  const types = { '.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.css':'text/css; charset=utf-8', '.png':'image/png', '.jpg':'image/jpeg', '.jpeg':'image/jpeg', '.webp':'image/webp', '.avif':'image/avif', '.mp4':'video/mp4', '.svg':'image/svg+xml', '.json':'application/json; charset=utf-8' };
+  try { const data = await readFile(file); res.writeHead(200, { 'content-type': types[extname(file)] || 'application/octet-stream' }); res.end(data); }
+  catch { try { const data = await readFile(join(root, 'dist', 'index.html')); res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }); res.end(data); } catch { json(res, 404, { ok: false, error: 'not_found' }); } }
+}
+const server = http.createServer(async (req, res) => {
+  security(res);
+  if (req.method === 'GET' && req.url === '/api/health') return json(res, 200, { ok: true, databaseConfigured: Boolean(process.env.DATABASE_URL), adminConfigured: Boolean(process.env.ADMIN_EMAIL && process.env.ADMIN_PASSWORD_HASH) });
+  if (req.method === 'GET' && req.url === '/api/admin/session') { const session = sessionFor(req); return json(res, 200, { ok: Boolean(session), email: session?.email || null }); }
+  if (req.method === 'POST' && req.url === '/api/admin/login') return adminLogin(req, res);
+  if (req.method === 'POST' && req.url === '/api/admin/logout') return adminLogout(req, res);
+  if (req.method === 'POST' && req.url === '/api/contact') return contact(req, res);
+  const url = new URL(req.url || '/', 'http://localhost');
+  if (req.method === 'GET' && url.pathname === '/api/research/articles') return researchList(req, res);
+  if (req.method === 'GET' && url.pathname.startsWith('/api/research/articles/')) return researchArticle(decodeURIComponent(url.pathname.slice('/api/research/articles/'.length)), res);
+  if (req.method === 'POST' && url.pathname === '/api/research/submissions') return researchSubmission(req, res);
+  if (req.method === 'POST' && url.pathname === '/api/research/newsletter') return newsletterSubscription(req, res);
+  if (req.method === 'OPTIONS') { res.writeHead(204); return res.end(); }
+  return staticFile(url.pathname, res);
+});
+server.listen(port, '0.0.0.0', () => console.log(`OkzByte server listening on ${port}`));

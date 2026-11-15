@@ -1,14 +1,48 @@
 {
   "rewrites": [
-    { "source": "/about", "destination": "/" },
-    { "source": "/technologies", "destination": "/" },
-    { "source": "/solutions", "destination": "/" },
-    { "source": "/products", "destination": "/" },
-    { "source": "/research", "destination": "/" },
-    { "source": "/ecosystem", "destination": "/" },
-    { "source": "/contact", "destination": "/" },
-    { "source": "/privacy", "destination": "/" },
-    { "source": "/terms", "destination": "/" },
-    { "source": "/admin", "destination": "/" }
+    {
+      "source": "/about",
+      "destination": "/"
+    },
+    {
+      "source": "/technologies",
+      "destination": "/"
+    },
+    {
+      "source": "/solutions",
+      "destination": "/"
+    },
+    {
+      "source": "/products",
+      "destination": "/"
+    },
+    {
+      "source": "/research/:slug",
+      "destination": "/"
+    },
+    {
+      "source": "/research",
+      "destination": "/"
+    },
+    {
+      "source": "/ecosystem",
+      "destination": "/"
+    },
+    {
+      "source": "/contact",
+      "destination": "/"
+    },
+    {
+      "source": "/privacy",
+      "destination": "/"
+    },
+    {
+      "source": "/terms",
+      "destination": "/"
+    },
+    {
+      "source": "/admin",
+      "destination": "/"
+    }
   ]
 }
