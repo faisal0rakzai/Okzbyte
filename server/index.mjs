@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
 import { handleSupport } from './support.mjs';
 import { fileURLToPath } from 'node:url';
+import { handleResearchAdmin } from './research-admin.mjs';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 const port = Number(process.env.PORT || 3000);
@@ -133,6 +134,9 @@ function researchWindow(req) {
   if (category) where += ` AND category = ${bind(category)}`;
   const type = clean(url.searchParams.get('contentType')).slice(0, 80);
   if (type) where += ` AND content_type = ${bind(type)}`;
+  const platform = clean(url.searchParams.get('platform')).toUpperCase();
+  if (platform && !['ZENODO','RESEARCHGATE','ORCID','OFFICIAL RESEARCH ARCHIVE','OTHER VERIFIED REPOSITORY'].includes(platform)) throw Object.assign(new Error('invalid_platform'), { code:'INVALID_PLATFORM' });
+  if (platform) where += ` AND EXISTS (SELECT 1 FROM research_article_sources src WHERE src.article_id=research_articles.id AND src.platform=${bind(platform)} AND src.verified=TRUE)`;
   const year = clean(url.searchParams.get('year'));
   if (/^\d{4}$/.test(year)) where += ` AND EXTRACT(YEAR FROM published_at)::int = ${bind(Number(year))}`;
   const author = clean(url.searchParams.get('author')).slice(0, 120);
@@ -144,22 +148,25 @@ function researchWindow(req) {
   return { where, values, page, pageSize, order };
 }
 async function researchList(req, res) {
-  const filter = researchWindow(req);
+  let filter;
+  try { filter = researchWindow(req); }
+  catch(error) { return json(res,400,{ok:false,error:error.code==='INVALID_PLATFORM'?'invalid_platform':'invalid_filter'}); }
   try {
     const result = await withDatabase(async db => {
       const count = await db.query(`SELECT COUNT(*)::int AS total FROM research_articles WHERE ${filter.where}`, filter.values);
       const offset = (filter.page - 1) * filter.pageSize, limitPosition = filter.values.length + 1, offsetPosition = filter.values.length + 2;
-      const rows = await db.query(`SELECT slug,title,subtitle,author,excerpt,abstract,cover_image_url,published_at,updated_at,category,content_type,keywords,doi,external_url,pdf_url,seo_title,seo_description FROM research_articles WHERE ${filter.where} ORDER BY ${filter.order} LIMIT $${limitPosition} OFFSET $${offsetPosition}`, [...filter.values, filter.pageSize, offset]);
+      const rows = await db.query(`SELECT slug,title,subtitle,author,excerpt,abstract,cover_image_url,published_at,updated_at,category,content_type,keywords,doi,external_url,CASE WHEN pdf_permission_confirmed=TRUE THEN pdf_url ELSE NULL END AS pdf_url,seo_title,seo_description,COALESCE((SELECT json_agg(json_build_object('platform',src.platform,'source_url',src.source_url,'record_identifier',src.record_identifier,'source_title',src.source_title,'is_primary',src.is_primary) ORDER BY src.is_primary DESC,src.platform) FROM research_article_sources src WHERE src.article_id=research_articles.id AND src.verified=TRUE),'[]'::json) AS sources FROM research_articles WHERE ${filter.where} ORDER BY ${filter.order} LIMIT $${limitPosition} OFFSET $${offsetPosition}`, [...filter.values, filter.pageSize, offset]);
       const [categoryCounts, authors, years, featured] = await Promise.all([
         db.query("SELECT category, COUNT(*)::int AS count FROM research_articles WHERE status='published' AND category IS NOT NULL GROUP BY category"),
         db.query("SELECT DISTINCT author FROM research_articles WHERE status='published' AND author IS NOT NULL AND author <> '' ORDER BY author LIMIT 300"),
         db.query("SELECT DISTINCT EXTRACT(YEAR FROM published_at)::int AS year FROM research_articles WHERE status='published' AND published_at IS NOT NULL ORDER BY year DESC LIMIT 30"),
-        db.query("SELECT slug,title,subtitle,author,excerpt,abstract,cover_image_url,published_at,updated_at,category,content_type,keywords,doi,external_url,pdf_url,seo_title,seo_description FROM research_articles WHERE status='published' AND is_featured=TRUE LIMIT 1"),
+        db.query("SELECT slug,title,subtitle,author,excerpt,abstract,cover_image_url,published_at,updated_at,category,content_type,keywords,doi,external_url,CASE WHEN pdf_permission_confirmed=TRUE THEN pdf_url ELSE NULL END AS pdf_url,seo_title,seo_description FROM research_articles WHERE status='published' AND is_featured=TRUE LIMIT 1"),
       ]);
       return { rows: rows.rows, total: count.rows[0].total, featured: featured.rows[0] || null, categoryCounts: Object.fromEntries(categoryCounts.rows.map(row => [row.category, row.count])), facets: { authors: authors.rows.map(row => row.author), years: years.rows.map(row => row.year) } };
     });
     return json(res, 200, { ok: true, items: result.rows, total: result.total, page: filter.page, pageSize: filter.pageSize, categoryCounts: result.categoryCounts, facets: result.facets, featured: result.featured });
   } catch (error) {
+    if (error.code === 'INVALID_PLATFORM') return json(res, 400, { ok:false, error:'invalid_platform' });
     if (error.code === 'DATABASE_NOT_CONFIGURED') return json(res, 503, { ok: false, error: 'research_database_not_configured', message: 'The research CMS database is not connected.' });
     if (error.code === '42P01' || error.code === '42703') return json(res, 503, { ok: false, error: 'research_schema_not_ready', message: 'The research platform database migration must be applied before the published library is available.' });
     console.error('research_list_failed', error); return json(res, 500, { ok: false, error: 'research_query_failed' });
@@ -169,18 +176,42 @@ async function researchArticle(slug, res) {
   if (!/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,159}$/.test(slug)) return json(res, 404, { ok: false, error: 'not_found' });
   try {
     const article = await withDatabase(async db => {
-      const result = await db.query("SELECT id,slug,title,subtitle,author,excerpt,abstract,content,cover_image_url,cover_alt,cover_caption,published_at,updated_at,category,content_type,keywords,doi,external_url,pdf_url,references_json,seo_title,seo_description FROM research_articles WHERE slug=$1 AND status='published' LIMIT 1", [slug]);
+      const result = await db.query("SELECT id,slug,title,subtitle,author,excerpt,abstract,content,cover_image_url,cover_alt,cover_caption,published_at,updated_at,category,content_type,keywords,doi,external_url,CASE WHEN pdf_permission_confirmed=TRUE THEN pdf_url ELSE NULL END AS pdf_url,references_json,seo_title,seo_description FROM research_articles WHERE slug=$1 AND status='published' LIMIT 1", [slug]);
       if (!result.rows[0]) return null;
       const article = result.rows[0];
-      const related = await db.query("SELECT slug,title,subtitle,author,excerpt,abstract,cover_image_url,published_at,updated_at,category,content_type,keywords,doi,external_url,pdf_url FROM research_articles WHERE status='published' AND slug<>$1 AND category IS NOT DISTINCT FROM $2 ORDER BY published_at DESC NULLS LAST LIMIT 3", [slug, article.category]);
-      return { article, related: related.rows };
+      const [related,sources] = await Promise.all([
+        db.query("SELECT slug,title,subtitle,author,excerpt,abstract,cover_image_url,published_at,updated_at,category,content_type,keywords,doi,external_url,CASE WHEN pdf_permission_confirmed=TRUE THEN pdf_url ELSE NULL END AS pdf_url FROM research_articles WHERE status='published' AND slug<>$1 AND category IS NOT DISTINCT FROM $2 ORDER BY published_at DESC NULLS LAST LIMIT 3", [slug, article.category]),
+        db.query('SELECT platform,source_url,record_identifier,source_title,is_primary FROM research_article_sources WHERE article_id=$1 AND verified=TRUE ORDER BY is_primary DESC,platform', [article.id]),
+      ]);
+      return { article, related: related.rows, sources:sources.rows };
     });
     if (!article) return json(res, 404, { ok: false, error: 'not_found' });
-    return json(res, 200, { ok: true, article: article.article, related: article.related });
+    return json(res, 200, { ok: true, article: article.article, related: article.related, sources:article.sources });
   } catch (error) {
     if (error.code === 'DATABASE_NOT_CONFIGURED') return json(res, 503, { ok: false, error: 'research_database_not_configured', message: 'The research CMS database is not connected.' });
     if (error.code === '42P01' || error.code === '42703') return json(res, 503, { ok: false, error: 'research_schema_not_ready', message: 'The research platform database migration must be applied first.' });
     console.error('research_article_failed', error); return json(res, 500, { ok: false, error: 'research_query_failed' });
+  }
+}
+async function researchPublicProfile(res) {
+  try {
+    const result = await withDatabase(db => db.query("SELECT name,biography,research_interests,orcid,external_profile_url,researchgate_url,zenodo_url,google_scholar_url,linkedin_url,official_research_url FROM research_authors WHERE profile_verified=TRUE AND orcid='0009-0000-0915-7272' LIMIT 1"));
+    if (!result.rows[0]) return json(res,404,{ok:false,error:'profile_not_found'});
+    return json(res,200,{ok:true,profile:result.rows[0]});
+  } catch(error) {
+    if(error.code==='DATABASE_NOT_CONFIGURED') return json(res,503,{ok:false,error:'research_database_not_configured'});
+    if(error.code==='42P01'||error.code==='42703') return json(res,503,{ok:false,error:'research_schema_not_ready'});
+    console.error('research_profile_failed',error);return json(res,500,{ok:false,error:'research_query_failed'});
+  }
+}
+async function researchPublicBooks(res) {
+  try {
+    const result=await withDatabase(db=>db.query("SELECT id,title,subtitle,description,official_url,source_url,isbn FROM research_books WHERE status='listed' ORDER BY title"));
+    return json(res,200,{ok:true,items:result.rows});
+  } catch(error) {
+    if(error.code==='DATABASE_NOT_CONFIGURED') return json(res,503,{ok:false,error:'research_database_not_configured'});
+    if(error.code==='42P01'||error.code==='42703') return json(res,503,{ok:false,error:'research_schema_not_ready'});
+    console.error('research_books_failed',error);return json(res,500,{ok:false,error:'research_query_failed'});
   }
 }
 function rateLimit(req, res, bucket, maximum = 3) {
@@ -234,7 +265,10 @@ const server = http.createServer(async (req, res) => {
   if (req.method === 'POST' && req.url === '/api/careers/talent') return careerTalent(req, res);
   const url = new URL(req.url || '/', 'http://localhost');
   if (url.pathname.startsWith('/api/support/') || url.pathname.startsWith('/api/admin/support/')) { const handled = await handleSupport(req, res, { session: sessionFor(req) }); if (handled !== false) return handled; }
+  if (url.pathname.startsWith('/api/admin/research/')) return handleResearchAdmin(req, res, url, { json, body, sessionFor, withDatabase });
   if (req.method === 'GET' && url.pathname === '/api/research/articles') return researchList(req, res);
+  if (req.method === 'GET' && url.pathname === '/api/research/profile') return researchPublicProfile(res);
+  if (req.method === 'GET' && url.pathname === '/api/research/books') return researchPublicBooks(res);
   if (req.method === 'GET' && url.pathname.startsWith('/api/research/articles/')) return researchArticle(decodeURIComponent(url.pathname.slice('/api/research/articles/'.length)), res);
   if (req.method === 'POST' && url.pathname === '/api/research/submissions') return researchSubmission(req, res);
   if (req.method === 'POST' && url.pathname === '/api/research/newsletter') return newsletterSubscription(req, res);

@@ -25,6 +25,10 @@
       "title": "Research & Ideas"
     },
     {
+      "path": "/research/profile",
+      "title": "Faisal Orakzai — Researcher Profile"
+    },
+    {
       "path": "/ecosystem",
       "title": "The Ecosystem"
     },
@@ -50,7 +54,7 @@
     },
     {
       "path": "/admin",
-      "title": "OkzByte Control Room"
+      "title": "OkzByte Research Desk"
     },
     {
       "path": "/research/:slug",
