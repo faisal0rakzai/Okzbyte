@@ -1,5 +1,9 @@
 {
   "rewrites": [
+    {"source":"/support/track","destination":"/"},
+    {"source":"/support/ticket","destination":"/"},
+    {"source":"/support/faq","destination":"/"},
+    {"source":"/support","destination":"/"},
     {
       "source": "/about",
       "destination": "/"

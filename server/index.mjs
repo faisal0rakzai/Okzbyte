@@ -2,6 +2,7 @@ import http from 'node:http';
 import crypto from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
+import { handleSupport } from './support.mjs';
 import { fileURLToPath } from 'node:url';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
@@ -232,6 +233,7 @@ const server = http.createServer(async (req, res) => {
   if (req.method === 'POST' && req.url === '/api/privacy/requests') return privacyRequest(req, res);
   if (req.method === 'POST' && req.url === '/api/careers/talent') return careerTalent(req, res);
   const url = new URL(req.url || '/', 'http://localhost');
+  if (url.pathname.startsWith('/api/support/') || url.pathname.startsWith('/api/admin/support/')) { const handled = await handleSupport(req, res, { session: sessionFor(req) }); if (handled !== false) return handled; }
   if (req.method === 'GET' && url.pathname === '/api/research/articles') return researchList(req, res);
   if (req.method === 'GET' && url.pathname.startsWith('/api/research/articles/')) return researchArticle(decodeURIComponent(url.pathname.slice('/api/research/articles/'.length)), res);
   if (req.method === 'POST' && url.pathname === '/api/research/submissions') return researchSubmission(req, res);
