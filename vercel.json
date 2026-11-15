@@ -37,6 +37,10 @@
       "destination": "/"
     },
     {
+      "source": "/terms-and-conditions",
+      "destination": "/"
+    },
+    {
       "source": "/terms",
       "destination": "/"
     },

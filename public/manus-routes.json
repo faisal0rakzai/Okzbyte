@@ -41,8 +41,12 @@
       "title": "Privacy Policy"
     },
     {
+      "path": "/terms-and-conditions",
+      "title": "Terms of Service — OkzByte Technology"
+    },
+    {
       "path": "/terms",
-      "title": "Terms of Service"
+      "title": "Terms of Service (legacy route)"
     },
     {
       "path": "/admin",
