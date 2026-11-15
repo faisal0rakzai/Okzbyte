@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { ArrowUpRight, Menu, X, MoveUpRight, Cpu, Blocks, Landmark, Network, Code2, Workflow, ShieldCheck, Scale, Sparkles, Mail, CheckCircle2 } from 'lucide-react';
 import './styles.css';
 const TechnologiesPage = lazy(() => import('./TechnologiesPage.jsx'));
+const SolutionsPage = lazy(() => import('./SolutionsPage.jsx'));
 
 const nav = [['About','/about'],['Technologies','/technologies'],['Solutions','/solutions'],['Research','/research'],['Ecosystem','/ecosystem']];
 const technology = [
@@ -43,7 +44,7 @@ const seo = {
   '/': ['OkzByte — Engineering Intelligence', 'OkzByte builds intelligent technologies, decentralized systems and digital infrastructure for the next generation of innovation.'],
   '/about': ['About OkzByte — Engineering Digital Intelligence', 'Discover OkzByte’s story, mission, vision, technology fields, principles, ecosystem initiatives, and founder.'],
   '/technologies': ['Technologies | AI, Blockchain, Web3 & Digital Infrastructure | OkzByte', 'Explore OkzByte’s technology domains, including artificial intelligence, blockchain, Web3, fintech, real-world assets, cloud infrastructure, data engineering and emerging digital systems.'],
-  '/solutions': ['Solutions — OkzByte', 'OkzByte turns complex technology problems into clear, scalable digital systems.'],
+  '/solutions': ['Technology Solutions | AI, Blockchain, Software & Cloud | OkzByte', 'Discover OkzByte technology solutions across AI, blockchain, Web3, fintech, enterprise software, web and mobile applications, cloud infrastructure and business automation.'],
   '/products': ['Products & Platforms — OkzByte', 'Product thinking and technology foundations for ambitious digital experiences.'],
   '/research': ['Research & Ideas — OkzByte', 'Technology research, engineering concepts and ideas from the OkzByte ecosystem.'],
   '/ecosystem': ['The Ecosystem — OkzByte', 'See how OkzByte contributes technology within the broader Orakzai Group ecosystem.'],
@@ -94,7 +95,7 @@ function App(){
    pageData.textContent=JSON.stringify({'@context':'https://schema.org','@type':'WebPage',name:title,description,url:canonicalUrl,publisher:{'@type':'Organization',name:'OkzByte',url:'https://okzbyte.com'},about:['Artificial intelligence','Blockchain technology','Web3','Financial technology','Real-world assets','Cloud infrastructure','Data engineering','Cybersecurity','Internet of Things','Robotics and automation'].map(name=>({'@type':'Thing',name}))});
   }else if(pageData){pageData.remove()}
  },[path]);
- let content=path==='/'?<Home/>:path==='/about'?<AboutPage/>:path==='/technologies'?<Suspense fallback={<div className="tech-page-loading" aria-label="Loading technologies"/>}><TechnologiesPage/></Suspense>:path==='/contact'?<Contact/>:path==='/admin'?<Admin/>:path==='/privacy'||path==='/terms'?<Legal kind={path.slice(1)}/>:<StandardPage type={path.slice(1) in {solutions:1,products:1,research:1,ecosystem:1}?path.slice(1):'about'}/>;
+ let content=path==='/'?<Home/>:path==='/about'?<AboutPage/>:path==='/solutions'?<Suspense fallback={<div className="tech-page-loading" aria-label="Loading solutions"/>}><SolutionsPage/></Suspense>:path==='/technologies'?<Suspense fallback={<div className="tech-page-loading" aria-label="Loading technologies"/>}><TechnologiesPage/></Suspense>:path==='/contact'?<Contact/>:path==='/admin'?<Admin/>:path==='/privacy'||path==='/terms'?<Legal kind={path.slice(1)}/>:<StandardPage type={path.slice(1) in {solutions:1,products:1,research:1,ecosystem:1}?path.slice(1):'about'}/>;
  return <><ScrollProgress/><Header/>{content}<Footer/></>
 }
 createRoot(document.getElementById('root')).render(<App/>);
