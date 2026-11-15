@@ -12,6 +12,7 @@ const SESSION_TTL = 8 * 60 * 60 * 1000;
 const categories = new Set(['AI & Automation', 'Blockchain & Web3', 'Fintech & Digital Finance', 'RWA & PropTech', 'Software Development', 'Strategic Collaboration', 'General Inquiry']);
 const researchAreas = new Set(['Artificial Intelligence', 'Blockchain & Web3', 'Fintech & Digital Finance', 'Real-World Assets', 'Cloud & Digital Infrastructure', 'Cybersecurity', 'Emerging Technologies', 'Scientific & Technical Papers']);
 const submissionTypes = new Set(['Collaboration inquiry', 'Technical paper proposal', 'Research contribution', 'Expert commentary']);
+const privacyRequestTypes = new Set(['Access', 'Correction', 'Deletion', 'Data Portability', 'Withdraw Consent', 'Other Privacy Concern']);
 const careerInterestAreas = new Set(['AI & Machine Learning', 'Blockchain Development', 'Web Development', 'Software Engineering', 'Research & Technical Writing', 'UI/UX Design', 'Business & Operations', 'Artificial Intelligence & Machine Learning', 'Blockchain & Web3', 'Frontend & Backend Development', 'Cybersecurity', 'Cloud & DevOps', 'Data Science & Research', 'Product & UI/UX Design', 'Business Development', 'Marketing & Communications', 'Operations & Administration', 'Internships & Graduate Programs']);
 const json = (res, status, data) => { res.writeHead(status, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' }); res.end(JSON.stringify(data)); };
 const security = res => {
@@ -97,6 +98,28 @@ async function contact(req, res) {
     await withDatabase(db => db.query('INSERT INTO contact_inquiries (name,email,organization,category,message,client_fingerprint) VALUES ($1,$2,$3,$4,$5,$6)', [name, email, organization || null, category, message, crypto.createHash('sha256').update(key).digest('hex')]));
     return json(res, 201, { ok: true });
   } catch (error) { if (error.code === 'DATABASE_NOT_CONFIGURED') return json(res, 503, { ok: false, error: 'contact_backend_not_configured', message: 'DATABASE_URL is required before inquiries can be stored.' }); console.error('contact_insert_failed', error); return json(res, 500, { ok: false, error: 'storage_failed' }); }
+}
+async function privacyRequest(req, res) {
+  const origin = req.headers.origin;
+  const requestHost = String(req.headers['x-forwarded-host'] || req.headers.host || '').split(',')[0].trim().toLowerCase();
+  if (origin) {
+    try { if (new URL(origin).host.toLowerCase() !== requestHost) return json(res, 403, { ok: false, error: 'origin_not_allowed' }); }
+    catch { return json(res, 403, { ok: false, error: 'origin_not_allowed' }); }
+  }
+  if (!rateLimit(req, res, 'privacy-request', 3)) return;
+  let input; try { input = await body(req); } catch (error) { return json(res, 400, { ok: false, error: error.message }); }
+  const fullName = clean(input.fullName), email = clean(input.email).toLowerCase(), requestType = clean(input.requestType), description = clean(input.description), supportingInfo = clean(input.supportingInfo);
+  if (fullName.length < 2 || fullName.length > 120 || !validEmail(email) || !privacyRequestTypes.has(requestType) || description.length < 10 || description.length > 4000 || supportingInfo.length > 2000 || input.consent !== true) return json(res, 422, { ok: false, error: 'validation_failed' });
+  const reference = `PRV-${crypto.randomBytes(6).toString('hex').toUpperCase()}`;
+  try {
+    await withDatabase(db => db.query('INSERT INTO privacy_requests (reference_code,full_name,email,request_type,description,supporting_info) VALUES ($1,$2,$3,$4,$5,$6)', [reference, fullName, email, requestType, description, supportingInfo]));
+    return json(res, 201, { ok: true, reference });
+  } catch (error) {
+    if (error.code === 'DATABASE_NOT_CONFIGURED') return json(res, 503, { ok: false, error: 'privacy_database_not_configured', message: 'Privacy request storage is not configured. Please email hello@okzbyte.com.' });
+    if (error.code === '42P01') return json(res, 503, { ok: false, error: 'privacy_schema_not_ready', message: 'Privacy request storage is not configured yet. Please email hello@okzbyte.com.' });
+    console.error('privacy_request_failed', error.code || 'unknown');
+    return json(res, 500, { ok: false, error: 'privacy_request_storage_failed', message: 'The request could not be stored. Please email hello@okzbyte.com.' });
+  }
 }
 function researchWindow(req) {
   const url = new URL(req.url, 'http://localhost');
@@ -206,6 +229,7 @@ const server = http.createServer(async (req, res) => {
   if (req.method === 'POST' && req.url === '/api/admin/login') return adminLogin(req, res);
   if (req.method === 'POST' && req.url === '/api/admin/logout') return adminLogout(req, res);
   if (req.method === 'POST' && req.url === '/api/contact') return contact(req, res);
+  if (req.method === 'POST' && req.url === '/api/privacy/requests') return privacyRequest(req, res);
   if (req.method === 'POST' && req.url === '/api/careers/talent') return careerTalent(req, res);
   const url = new URL(req.url || '/', 'http://localhost');
   if (req.method === 'GET' && url.pathname === '/api/research/articles') return researchList(req, res);

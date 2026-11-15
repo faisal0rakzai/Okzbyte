@@ -9,6 +9,7 @@ const SolutionsPage = lazy(() => import('./SolutionsPage.jsx'));
 const ResearchPage = lazy(() => import('./ResearchPage.jsx'));
 const EcosystemPage = lazy(() => import('./EcosystemPage.jsx'));
 const CareersPage = lazy(() => import('./CareersPage.jsx'));
+const PrivacyPage = lazy(() => import('./PrivacyPage.jsx'));
 
 const nav = [['About','/about'],['Technologies','/technologies'],['Solutions','/solutions'],['Research','/research'],['Ecosystem','/ecosystem'],['Careers','/careers']];
 const technology = [
@@ -55,7 +56,7 @@ const seo = {
   '/ecosystem': ['OkzByte Ecosystem | AI, Blockchain, Digital Platforms & Ventures', 'Explore the OkzByte and Orakzai ecosystem of technology initiatives, AI research, blockchain platforms, digital identity, fintech, property technology and business ventures.'],
   '/careers': ['Careers at OkzByte | Build the Future of Technology', 'Join OkzByte as we explore artificial intelligence, blockchain, digital infrastructure and next-generation technology. Discover our culture and future talent opportunities.'],
   '/contact': ['Contact OkzByte', 'Start a conversation about AI, blockchain, fintech, software, infrastructure and strategic collaboration.'],
-  '/privacy': ['Privacy Policy — OkzByte', 'OkzByte privacy policy and information practices.'],
+  '/privacy': ['Privacy Policy & Data Protection Center — OkzByte', 'Read the OkzByte privacy policy, data practices, privacy rights, and contact details.'],
   '/terms': ['Terms of Service — OkzByte', 'OkzByte terms of service and website usage information.']
 };
 function App(){
@@ -101,7 +102,7 @@ function App(){
    pageData.textContent=JSON.stringify({'@context':'https://schema.org','@type':'WebPage',name:title,description,url:canonicalUrl,publisher:{'@type':'Organization',name:'OkzByte',url:'https://okzbyte.com'},about:(path.startsWith('/research')?['Artificial intelligence','Blockchain technology','Fintech','Real-world assets','Digital infrastructure','Cybersecurity','Emerging technologies','Scientific research']:path==='/ecosystem'?['Artificial intelligence','Blockchain technology','Digital identity','Fintech','PropTech','Business ventures','Community initiatives']:path==='/careers'?['Artificial intelligence','Blockchain technology','Software engineering','Research and development','Talent community']:['Artificial intelligence','Blockchain technology','Web3','Financial technology','Real-world assets','Cloud infrastructure','Data engineering','Cybersecurity','Internet of Things','Robotics and automation']).map(name=>({'@type':'Thing',name}))});
   }else if(pageData){pageData.remove()}
  },[path]);
-  let content=path==='/'?<Home/>:path==='/about'?<AboutPage/>:path==='/solutions'?<Suspense fallback={<div className="tech-page-loading" aria-label="Loading solutions"/>}><SolutionsPage/></Suspense>:path==='/research'||path.startsWith('/research/')?<Suspense fallback={<div className="tech-page-loading" aria-label="Loading research"/>}><ResearchPage slug={path.startsWith('/research/')?decodeURIComponent(path.slice('/research/'.length).split('/')[0]):''}/></Suspense>:path==='/technologies'?<Suspense fallback={<div className="tech-page-loading" aria-label="Loading technologies"/>}><TechnologiesPage/></Suspense>:path==='/ecosystem'?<Suspense fallback={<div className="tech-page-loading" aria-label="Loading ecosystem"/>}><EcosystemPage/></Suspense>:path==='/careers'?<Suspense fallback={<div className="tech-page-loading" aria-label="Loading careers"/>}><CareersPage/></Suspense>:path==='/contact'?<Contact/>:path==='/admin'?<Admin/>:path==='/privacy'||path==='/terms'?<Legal kind={path.slice(1)}/>:<StandardPage type={path.slice(1) in {solutions:1,products:1,research:1,ecosystem:1}?path.slice(1):'about'}/>;
+  let content=path==='/'?<Home/>:path==='/about'?<AboutPage/>:path==='/solutions'?<Suspense fallback={<div className="tech-page-loading" aria-label="Loading solutions"/>}><SolutionsPage/></Suspense>:path==='/research'||path.startsWith('/research/')?<Suspense fallback={<div className="tech-page-loading" aria-label="Loading research"/>}><ResearchPage slug={path.startsWith('/research/')?decodeURIComponent(path.slice('/research/'.length).split('/')[0]):''}/></Suspense>:path==='/technologies'?<Suspense fallback={<div className="tech-page-loading" aria-label="Loading technologies"/>}><TechnologiesPage/></Suspense>:path==='/ecosystem'?<Suspense fallback={<div className="tech-page-loading" aria-label="Loading ecosystem"/>}><EcosystemPage/></Suspense>:path==='/careers'?<Suspense fallback={<div className="tech-page-loading" aria-label="Loading careers"/>}><CareersPage/></Suspense>:path==='/privacy'?<Suspense fallback={<div className="tech-page-loading" aria-label="Loading privacy policy"/>}><PrivacyPage/></Suspense>:path==='/contact'?<Contact/>:path==='/admin'?<Admin/>:path==='/terms'?<Legal kind="terms"/>:<StandardPage type={path.slice(1) in {solutions:1,products:1,research:1,ecosystem:1}?path.slice(1):'about'}/>;
  return <><ScrollProgress/><Header/>{content}<Footer/></>
 }
 createRoot(document.getElementById('root')).render(<App/>);
