@@ -6,6 +6,7 @@ import './styles.css';
 const TechnologiesPage = lazy(() => import('./TechnologiesPage.jsx'));
 const SolutionsPage = lazy(() => import('./SolutionsPage.jsx'));
 const ResearchPage = lazy(() => import('./ResearchPage.jsx'));
+const EcosystemPage = lazy(() => import('./EcosystemPage.jsx'));
 
 const nav = [['About','/about'],['Technologies','/technologies'],['Solutions','/solutions'],['Research','/research'],['Ecosystem','/ecosystem']];
 const technology = [
@@ -48,7 +49,7 @@ const seo = {
   '/solutions': ['Technology Solutions | AI, Blockchain, Software & Cloud | OkzByte', 'Discover OkzByte technology solutions across AI, blockchain, Web3, fintech, enterprise software, web and mobile applications, cloud infrastructure and business automation.'],
   '/products': ['Products & Platforms — OkzByte', 'Product thinking and technology foundations for ambitious digital experiences.'],
   '/research': ['OkzByte Research | AI, Blockchain, Technology & Digital Infrastructure', 'Explore OkzByte Research for technical papers, original research, analysis and insights across artificial intelligence, blockchain, fintech, Web3 and emerging technologies.'],
-  '/ecosystem': ['The Ecosystem — OkzByte', 'See how OkzByte contributes technology within the broader Orakzai Group ecosystem.'],
+  '/ecosystem': ['OkzByte Ecosystem | AI, Blockchain, Digital Platforms & Ventures', 'Explore the OkzByte and Orakzai ecosystem of technology initiatives, AI research, blockchain platforms, digital identity, fintech, property technology and business ventures.'],
   '/contact': ['Contact OkzByte', 'Start a conversation about AI, blockchain, fintech, software, infrastructure and strategic collaboration.'],
   '/privacy': ['Privacy Policy — OkzByte', 'OkzByte privacy policy and information practices.'],
   '/terms': ['Terms of Service — OkzByte', 'OkzByte terms of service and website usage information.']
@@ -91,12 +92,12 @@ function App(){
   if(!ld){ld=document.createElement('script');ld.id='okzbyte-structured-data';ld.type='application/ld+json';document.head.appendChild(ld)}
   ld.textContent=JSON.stringify({'@context':'https://schema.org','@type':'Organization',name:'OkzByte',url:'https://okzbyte.com',description:'Technology venture building intelligent software, decentralized systems and digital infrastructure.',logo:'https://okzbyte.com/logo.png'});
   let pageData=document.getElementById('okzbyte-page-data');
-  if(path==='/technologies'||path==='/research'||path.startsWith('/research/')){
+  if(path==='/technologies'||path==='/research'||path.startsWith('/research/')||path==='/ecosystem'){
    if(!pageData){pageData=document.createElement('script');pageData.id='okzbyte-page-data';pageData.type='application/ld+json';document.head.appendChild(pageData)}
-   pageData.textContent=JSON.stringify({'@context':'https://schema.org','@type':'WebPage',name:title,description,url:canonicalUrl,publisher:{'@type':'Organization',name:'OkzByte',url:'https://okzbyte.com'},about:(path.startsWith('/research')?['Artificial intelligence','Blockchain technology','Fintech','Real-world assets','Digital infrastructure','Cybersecurity','Emerging technologies','Scientific research']:['Artificial intelligence','Blockchain technology','Web3','Financial technology','Real-world assets','Cloud infrastructure','Data engineering','Cybersecurity','Internet of Things','Robotics and automation']).map(name=>({'@type':'Thing',name}))});
+   pageData.textContent=JSON.stringify({'@context':'https://schema.org','@type':'WebPage',name:title,description,url:canonicalUrl,publisher:{'@type':'Organization',name:'OkzByte',url:'https://okzbyte.com'},about:(path.startsWith('/research')?['Artificial intelligence','Blockchain technology','Fintech','Real-world assets','Digital infrastructure','Cybersecurity','Emerging technologies','Scientific research']:path==='/ecosystem'?['Artificial intelligence','Blockchain technology','Digital identity','Fintech','PropTech','Business ventures','Community initiatives']:['Artificial intelligence','Blockchain technology','Web3','Financial technology','Real-world assets','Cloud infrastructure','Data engineering','Cybersecurity','Internet of Things','Robotics and automation']).map(name=>({'@type':'Thing',name}))});
   }else if(pageData){pageData.remove()}
  },[path]);
- let content=path==='/'?<Home/>:path==='/about'?<AboutPage/>:path==='/solutions'?<Suspense fallback={<div className="tech-page-loading" aria-label="Loading solutions"/>}><SolutionsPage/></Suspense>:path==='/research'||path.startsWith('/research/')?<Suspense fallback={<div className="tech-page-loading" aria-label="Loading research"/>}><ResearchPage slug={path.startsWith('/research/')?decodeURIComponent(path.slice('/research/'.length).split('/')[0]):''}/></Suspense>:path==='/technologies'?<Suspense fallback={<div className="tech-page-loading" aria-label="Loading technologies"/>}><TechnologiesPage/></Suspense>:path==='/contact'?<Contact/>:path==='/admin'?<Admin/>:path==='/privacy'||path==='/terms'?<Legal kind={path.slice(1)}/>:<StandardPage type={path.slice(1) in {solutions:1,products:1,research:1,ecosystem:1}?path.slice(1):'about'}/>;
+  let content=path==='/'?<Home/>:path==='/about'?<AboutPage/>:path==='/solutions'?<Suspense fallback={<div className="tech-page-loading" aria-label="Loading solutions"/>}><SolutionsPage/></Suspense>:path==='/research'||path.startsWith('/research/')?<Suspense fallback={<div className="tech-page-loading" aria-label="Loading research"/>}><ResearchPage slug={path.startsWith('/research/')?decodeURIComponent(path.slice('/research/'.length).split('/')[0]):''}/></Suspense>:path==='/technologies'?<Suspense fallback={<div className="tech-page-loading" aria-label="Loading technologies"/>}><TechnologiesPage/></Suspense>:path==='/ecosystem'?<Suspense fallback={<div className="tech-page-loading" aria-label="Loading ecosystem"/>}><EcosystemPage/></Suspense>:path==='/contact'?<Contact/>:path==='/admin'?<Admin/>:path==='/privacy'||path==='/terms'?<Legal kind={path.slice(1)}/>:<StandardPage type={path.slice(1) in {solutions:1,products:1,research:1,ecosystem:1}?path.slice(1):'about'}/>;
  return <><ScrollProgress/><Header/>{content}<Footer/></>
 }
 createRoot(document.getElementById('root')).render(<App/>);

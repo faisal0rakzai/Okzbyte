@@ -155,7 +155,7 @@ function createNeural(group) {
   ));
 }
 
-export default function TechEcosystemScene({ variant = 'network', selectedIndex = 0, onSelect, label = 'Interactive 3D technology visualization' }) {
+export default function TechEcosystemScene({ variant = 'network', selectedIndex = 0, onSelect, label = 'Interactive 3D technology visualization', nodeCount = 12 }) {
   const mountRef = useRef(null);
   const selectedRef = useRef(selectedIndex);
   const selectRef = useRef(onSelect);
@@ -182,7 +182,7 @@ export default function TechEcosystemScene({ variant = 'network', selectedIndex 
       else if (variant === 'finance') createFinance(group);
       else if (variant === 'infrastructure') createInfrastructure(group);
       else if (variant === 'neural') createNeural(group);
-      else selectableNodes = createNetwork(group);
+      else selectableNodes = createNetwork(group, nodeCount);
 
       renderer = new THREE.WebGLRenderer({ alpha: true, antialias: false, powerPreference: 'low-power' });
       renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.6));
