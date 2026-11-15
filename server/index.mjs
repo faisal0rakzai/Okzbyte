@@ -12,6 +12,7 @@ const SESSION_TTL = 8 * 60 * 60 * 1000;
 const categories = new Set(['AI & Automation', 'Blockchain & Web3', 'Fintech & Digital Finance', 'RWA & PropTech', 'Software Development', 'Strategic Collaboration', 'General Inquiry']);
 const researchAreas = new Set(['Artificial Intelligence', 'Blockchain & Web3', 'Fintech & Digital Finance', 'Real-World Assets', 'Cloud & Digital Infrastructure', 'Cybersecurity', 'Emerging Technologies', 'Scientific & Technical Papers']);
 const submissionTypes = new Set(['Collaboration inquiry', 'Technical paper proposal', 'Research contribution', 'Expert commentary']);
+const careerInterestAreas = new Set(['AI & Machine Learning', 'Blockchain Development', 'Web Development', 'Software Engineering', 'Research & Technical Writing', 'UI/UX Design', 'Business & Operations', 'Artificial Intelligence & Machine Learning', 'Blockchain & Web3', 'Frontend & Backend Development', 'Cybersecurity', 'Cloud & DevOps', 'Data Science & Research', 'Product & UI/UX Design', 'Business Development', 'Marketing & Communications', 'Operations & Administration', 'Internships & Graduate Programs']);
 const json = (res, status, data) => { res.writeHead(status, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' }); res.end(JSON.stringify(data)); };
 const security = res => {
   res.setHeader('x-content-type-options', 'nosniff');
@@ -41,6 +42,36 @@ async function withDatabase(fn) {
   const db = new Client({ connectionString: process.env.DATABASE_URL, ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : undefined });
   await db.connect();
   try { return await fn(db); } finally { await db.end(); }
+}
+async function supabaseRequest(path, options = {}) {
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SECRET_KEY) throw Object.assign(new Error('supabase_not_configured'), { code: 'SUPABASE_NOT_CONFIGURED' });
+  const response = await fetch(`${process.env.SUPABASE_URL.replace(/\/$/, '')}/rest/v1/${path}`, { ...options, headers: { apikey: process.env.SUPABASE_SECRET_KEY, authorization: `Bearer ${process.env.SUPABASE_SECRET_KEY}`, 'content-type': 'application/json', prefer: 'return=representation', ...(options.headers || {}) } });
+  const text = await response.text();
+  let data; try { data = JSON.parse(text || '{}'); } catch { data = { message: text }; }
+  if (!response.ok) throw Object.assign(new Error(data.message || data.hint || 'supabase_request_failed'), { code: `SUPABASE_${response.status}`, status: response.status });
+  return data;
+}
+async function sendCareerNotification(subject, text) {
+  if (!process.env.RESEND_API_KEY || !process.env.CAREERS_NOTIFICATION_EMAIL || !process.env.RESEND_FROM_EMAIL) return false;
+  const response = await fetch('https://api.resend.com/emails', { method: 'POST', headers: { authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'content-type': 'application/json' }, body: JSON.stringify({ from: process.env.RESEND_FROM_EMAIL, to: [process.env.CAREERS_NOTIFICATION_EMAIL], subject, text }) });
+  if (!response.ok) { console.error('career_notification_failed', response.status); return false; }
+  return true;
+}
+async function careerTalent(req, res) {
+  if (!rateLimit(req, res, 'career-talent', 3)) return;
+  let input; try { input = await body(req); } catch (error) { return json(res, 400, { ok: false, error: error.message }); }
+  const fullName = clean(input.fullName), email = clean(input.email).toLowerCase(), area = clean(input.areaOfInterest), portfolio = clean(input.portfolioUrl), note = clean(input.note);
+  if (fullName.length < 2 || fullName.length > 120 || !validEmail(email) || !careerInterestAreas.has(area) || note.length < 20 || note.length > 3000 || portfolio && (!/^https:\/\//i.test(portfolio) || portfolio.length > 2048) || input.consent !== true) return json(res, 422, { ok: false, error: 'validation_failed' });
+  try {
+    const rows = await supabaseRequest('career_talent_network', { method: 'POST', body: JSON.stringify({ full_name: fullName, email, area_of_interest: area, portfolio_url: portfolio || null, note, consent_at: new Date().toISOString() }) });
+    const id = Array.isArray(rows) && rows[0]?.id;
+    await sendCareerNotification(`New OkzByte talent-network interest: ${fullName}`, `Name: ${fullName}\nEmail: ${email}\nArea: ${area}\nPortfolio: ${portfolio || 'Not provided'}\n\n${note}\n\nRecord: ${id || 'created'}`);
+    return json(res, 201, { ok: true, reference: id ? String(id).slice(0, 8).toUpperCase() : null, emailConfigured: Boolean(process.env.RESEND_API_KEY && process.env.CAREERS_NOTIFICATION_EMAIL && process.env.RESEND_FROM_EMAIL) });
+  } catch (error) {
+    if (error.code === 'SUPABASE_NOT_CONFIGURED') return json(res, 503, { ok: false, error: 'careers_backend_not_configured' });
+    if (error.code === 'SUPABASE_404') return json(res, 503, { ok: false, error: 'careers_schema_not_ready', message: 'Apply db/migrations/003_careers_platform.sql in Supabase before accepting talent registrations.' });
+    console.error('career_talent_failed', error.code); return json(res, 500, { ok: false, error: 'storage_failed' });
+  }
 }
 async function adminLogin(req, res) {
   if (!process.env.ADMIN_EMAIL || !process.env.ADMIN_PASSWORD_HASH) return json(res, 503, { ok: false, error: 'admin_not_configured' });
@@ -170,11 +201,12 @@ async function staticFile(pathname, res) {
 }
 const server = http.createServer(async (req, res) => {
   security(res);
-  if (req.method === 'GET' && req.url === '/api/health') return json(res, 200, { ok: true, databaseConfigured: Boolean(process.env.DATABASE_URL), adminConfigured: Boolean(process.env.ADMIN_EMAIL && process.env.ADMIN_PASSWORD_HASH) });
+  if (req.method === 'GET' && req.url === '/api/health') return json(res, 200, { ok: true, databaseConfigured: Boolean(process.env.DATABASE_URL), supabaseConfigured: Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SECRET_KEY), emailConfigured: Boolean(process.env.RESEND_API_KEY && process.env.CAREERS_NOTIFICATION_EMAIL && process.env.RESEND_FROM_EMAIL), adminConfigured: Boolean(process.env.ADMIN_EMAIL && process.env.ADMIN_PASSWORD_HASH) });
   if (req.method === 'GET' && req.url === '/api/admin/session') { const session = sessionFor(req); return json(res, 200, { ok: Boolean(session), email: session?.email || null }); }
   if (req.method === 'POST' && req.url === '/api/admin/login') return adminLogin(req, res);
   if (req.method === 'POST' && req.url === '/api/admin/logout') return adminLogout(req, res);
   if (req.method === 'POST' && req.url === '/api/contact') return contact(req, res);
+  if (req.method === 'POST' && req.url === '/api/careers/talent') return careerTalent(req, res);
   const url = new URL(req.url || '/', 'http://localhost');
   if (req.method === 'GET' && url.pathname === '/api/research/articles') return researchList(req, res);
   if (req.method === 'GET' && url.pathname.startsWith('/api/research/articles/')) return researchArticle(decodeURIComponent(url.pathname.slice('/api/research/articles/'.length)), res);

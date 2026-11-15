@@ -19,6 +19,9 @@
 - `npm run build` completed successfully.
 - Production server returned the Careers route and `/manus-routes.json` included `/careers`.
 - Changes pushed to GitHub `main` at commit `82677fbcf946de83153cc94a3392fb966f9d14dd`.
+- Supabase private `career-cvs` storage bucket provisioned with PDF/DOC/DOCX allow-list and a 10 MB limit.
+- Server-side Supabase REST and Resend adapters added; credentials remain local/deployment-only and are not committed.
+- Talent-network endpoint added at `POST /api/careers/talent` with rate limiting, validation, consent enforcement and optional Resend notification.
 
 ## NOT VERIFIED
 
@@ -28,12 +31,16 @@
 
 ## BLOCKED / REQUIRES BACKEND CONFIGURATION
 
-- Secure candidate application storage and unique application reference numbers.
+- Secure candidate application storage and unique application reference numbers (schema migration is ready but not yet applied).
 - PDF/DOC/DOCX upload, virus scanning, private object storage and authenticated CV retrieval.
 - Duplicate application protection and server-side application validation.
-- Talent registration persistence, unsubscribe workflow and email confirmation.
+- Talent registration persistence, unsubscribe workflow and email confirmation (endpoint is ready; schema must be applied and deployment environment variables configured).
 - Careers database tables and admin CRUD for jobs, departments and applications.
 - Role-based admin access, secure audit logs, status workflow and exports.
 - Genuine public vacancies and JobPosting structured data; none were added because no verified openings were supplied.
+
+## CONFIGURATION REQUIRED
+
+Apply `db/migrations/003_careers_platform.sql` in the Supabase SQL Editor or the project’s migration pipeline. Configure `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `RESEND_API_KEY`, `CAREERS_NOTIFICATION_EMAIL` and `RESEND_FROM_EMAIL` in the deployment environment. The local server health check confirms the Supabase and Resend variables are recognized; no candidate record was inserted during testing because the Careers schema was not yet present.
 
 The current public page deliberately does not present the browser-only talent form as a production recruitment system. Before accepting candidate data, connect the Careers schema, authenticated storage, upload validation, email infrastructure and admin permissions.
