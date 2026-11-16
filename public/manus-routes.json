@@ -33,6 +33,78 @@
       "title": "The Ecosystem"
     },
     {
+      "path": "/enterprise",
+      "title": "OkzByte Enterprise"
+    },
+    {
+      "path": "/enterprise/solutions",
+      "title": "Business Solutions"
+    },
+    {
+      "path": "/enterprise/solutions/:slug",
+      "title": "Business Solution"
+    },
+    {
+      "path": "/enterprise/industries",
+      "title": "Industry Solutions"
+    },
+    {
+      "path": "/enterprise/industries/:slug",
+      "title": "Industry Solution"
+    },
+    {
+      "path": "/enterprise/services",
+      "title": "Enterprise Services"
+    },
+    {
+      "path": "/enterprise/request-project",
+      "title": "Request a Project"
+    },
+    {
+      "path": "/enterprise/consultation",
+      "title": "Business Consultation"
+    },
+    {
+      "path": "/enterprise/case-studies",
+      "title": "Enterprise Case Studies"
+    },
+    {
+      "path": "/portal",
+      "title": "OkzByte Client Portal"
+    },
+    {
+      "path": "/portal/dashboard",
+      "title": "Client Dashboard"
+    },
+    {
+      "path": "/portal/projects",
+      "title": "Client Projects"
+    },
+    {
+      "path": "/portal/projects/:id",
+      "title": "Client Project"
+    },
+    {
+      "path": "/portal/proposals",
+      "title": "Client Proposals"
+    },
+    {
+      "path": "/portal/documents",
+      "title": "Client Documents"
+    },
+    {
+      "path": "/portal/support",
+      "title": "Client Support"
+    },
+    {
+      "path": "/portal/settings",
+      "title": "Client Account Settings"
+    },
+    {
+      "path": "/admin/enterprise",
+      "title": "Enterprise Admin"
+    },
+    {
       "path": "/security",
       "title": "OkzByte Security & Trust Center"
     },

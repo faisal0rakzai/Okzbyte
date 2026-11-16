@@ -6,6 +6,7 @@ import { handleSupport } from './support.mjs';
 import { fileURLToPath } from 'node:url';
 import { handleResearchAdmin } from './research-admin.mjs';
 import { handleVulnerabilityReport } from './security.mjs';
+import { handleConsultation, handleProjectRequest } from './enterprise.mjs';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 const port = Number(process.env.PORT || 3000);
@@ -264,6 +265,8 @@ const server = http.createServer(async (req, res) => {
   if (req.method === 'POST' && req.url === '/api/contact') return contact(req, res);
   if (req.method === 'POST' && req.url === '/api/privacy/requests') return privacyRequest(req, res);
   if (req.method === 'POST' && req.url === '/api/security/vulnerability-reports') return handleVulnerabilityReport(req, res);
+  if (req.method === 'POST' && req.url === '/api/enterprise/project-requests') return handleProjectRequest(req, res);
+  if (req.method === 'POST' && req.url === '/api/enterprise/consultations') return handleConsultation(req, res);
   if (req.method === 'POST' && req.url === '/api/careers/talent') return careerTalent(req, res);
   const url = new URL(req.url || '/', 'http://localhost');
   if (url.pathname.startsWith('/api/support/') || url.pathname.startsWith('/api/admin/support/')) { const handled = await handleSupport(req, res, { session: sessionFor(req) }); if (handled !== false) return handled; }

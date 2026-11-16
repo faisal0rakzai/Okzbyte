@@ -1,7 +1,27 @@
 {
   "rewrites": [
     {
-      "source": "/security/*",
+      "source": "/enterprise/:path*",
+      "destination": "/"
+    },
+    {
+      "source": "/enterprise",
+      "destination": "/"
+    },
+    {
+      "source": "/portal/:path*",
+      "destination": "/"
+    },
+    {
+      "source": "/portal",
+      "destination": "/"
+    },
+    {
+      "source": "/admin/enterprise",
+      "destination": "/"
+    },
+    {
+      "source": "/security/:path*",
       "destination": "/"
     },
     {
