@@ -33,6 +33,62 @@
       "title": "The Ecosystem"
     },
     {
+      "path": "/security",
+      "title": "OkzByte Security & Trust Center"
+    },
+    {
+      "path": "/security/overview",
+      "title": "Security Overview"
+    },
+    {
+      "path": "/security/application-security",
+      "title": "Application Security"
+    },
+    {
+      "path": "/security/infrastructure",
+      "title": "Infrastructure Security"
+    },
+    {
+      "path": "/security/data-protection",
+      "title": "Data Protection & Privacy"
+    },
+    {
+      "path": "/security/identity-access",
+      "title": "Identity & Access Security"
+    },
+    {
+      "path": "/security/smart-contracts",
+      "title": "Smart Contract Security"
+    },
+    {
+      "path": "/security/api-security",
+      "title": "API Security"
+    },
+    {
+      "path": "/security/vulnerability-disclosure",
+      "title": "Responsible Disclosure"
+    },
+    {
+      "path": "/security/incident-response",
+      "title": "Incident Response"
+    },
+    {
+      "path": "/security/trust",
+      "title": "Trust & Compliance Center"
+    },
+    {
+      "path": "/security/documentation",
+      "title": "Security Documentation"
+    },
+    {
+      "path": "/security/admin",
+      "title": "Security Status Dashboard"
+    },
+    {
+      "path": "/developers/api",
+      "title": "Developer API Security"
+    },
+    {
       "path": "/developer",
       "title": "OkzByte Developers (legacy route)"
     },

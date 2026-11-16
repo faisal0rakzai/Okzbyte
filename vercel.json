@@ -1,6 +1,18 @@
 {
   "rewrites": [
     {
+      "source": "/security/*",
+      "destination": "/"
+    },
+    {
+      "source": "/security",
+      "destination": "/"
+    },
+    {
+      "source": "/developers/api",
+      "destination": "/"
+    },
+    {
       "source": "/support/track",
       "destination": "/"
     },
