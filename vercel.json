@@ -1,75 +1,155 @@
 {
   "rewrites": [
     {
-      "source": "/ai-workspace",
-      "destination": "/"
-    },
-    {
-      "source": "/workspace/:path*",
-      "destination": "/"
-    },
-    {
-      "source": "/workspace",
-      "destination": "/"
-    },
-    {
-      "source": "/admin/ai-workspace",
-      "destination": "/"
-    },
-    {
-      "source": "/billing/:path*",
-      "destination": "/"
-    },
-    {
-      "source": "/billing",
-      "destination": "/"
-    },
-    {
-      "source": "/checkout",
-      "destination": "/"
-    },
-    {
-      "source": "/subscriptions/:path*",
-      "destination": "/"
-    },
-    {
-      "source": "/subscriptions",
-      "destination": "/"
-    },
-    {
-      "source": "/admin/billing/:path*",
-      "destination": "/"
-    },
-    {
-      "source": "/admin/billing",
-      "destination": "/"
-    },
-    {
-      "source": "/enterprise/:path*",
-      "destination": "/"
-    },
-    {
       "source": "/enterprise",
       "destination": "/"
     },
     {
-      "source": "/portal/:path*",
+      "source": "/enterprise/solutions",
       "destination": "/"
     },
     {
-      "source": "/portal",
+      "source": "/enterprise/industries",
       "destination": "/"
     },
     {
-      "source": "/admin/enterprise",
+      "source": "/enterprise/services",
       "destination": "/"
     },
     {
-      "source": "/security/:path*",
+      "source": "/enterprise/request-project",
+      "destination": "/"
+    },
+    {
+      "source": "/enterprise/consultation",
+      "destination": "/"
+    },
+    {
+      "source": "/enterprise/case-studies",
+      "destination": "/"
+    },
+    {
+      "source": "/enterprise/solutions/ai-automation",
+      "destination": "/"
+    },
+    {
+      "source": "/enterprise/solutions/blockchain-web3",
+      "destination": "/"
+    },
+    {
+      "source": "/enterprise/solutions/fintech-digital-finance",
+      "destination": "/"
+    },
+    {
+      "source": "/enterprise/solutions/rwa-proptech",
+      "destination": "/"
+    },
+    {
+      "source": "/enterprise/solutions/enterprise-software",
+      "destination": "/"
+    },
+    {
+      "source": "/enterprise/solutions/cloud-infrastructure",
+      "destination": "/"
+    },
+    {
+      "source": "/enterprise/solutions/cybersecurity-trust",
+      "destination": "/"
+    },
+    {
+      "source": "/enterprise/solutions/data-analytics",
+      "destination": "/"
+    },
+    {
+      "source": "/enterprise/industries/financial-services",
+      "destination": "/"
+    },
+    {
+      "source": "/enterprise/industries/real-estate-property",
+      "destination": "/"
+    },
+    {
+      "source": "/enterprise/industries/retail-ecommerce",
+      "destination": "/"
+    },
+    {
+      "source": "/enterprise/industries/technology-saas",
+      "destination": "/"
+    },
+    {
+      "source": "/enterprise/industries/logistics-transportation",
+      "destination": "/"
+    },
+    {
+      "source": "/enterprise/industries/education",
+      "destination": "/"
+    },
+    {
+      "source": "/enterprise/industries/healthcare-technology",
+      "destination": "/"
+    },
+    {
+      "source": "/enterprise/industries/government-public-services",
+      "destination": "/"
+    },
+    {
+      "source": "/enterprise/industries/manufacturing-industrial",
       "destination": "/"
     },
     {
       "source": "/security",
+      "destination": "/"
+    },
+    {
+      "source": "/security/overview",
+      "destination": "/"
+    },
+    {
+      "source": "/security/application-security",
+      "destination": "/"
+    },
+    {
+      "source": "/security/infrastructure",
+      "destination": "/"
+    },
+    {
+      "source": "/security/data-protection",
+      "destination": "/"
+    },
+    {
+      "source": "/security/identity-access",
+      "destination": "/"
+    },
+    {
+      "source": "/security/smart-contracts",
+      "destination": "/"
+    },
+    {
+      "source": "/security/api-security",
+      "destination": "/"
+    },
+    {
+      "source": "/security/vulnerability-disclosure",
+      "destination": "/"
+    },
+    {
+      "source": "/security/incident-response",
+      "destination": "/"
+    },
+    {
+      "source": "/security/trust",
+      "destination": "/"
+    },
+    {
+      "source": "/security/documentation",
+      "destination": "/"
+    },
+    {
+      "source": "/security/admin",
+      "destination": "/"
+    },
+    {
+      "source": "/ai-workspace",
       "destination": "/"
     },
     {
@@ -117,10 +197,6 @@
       "destination": "/"
     },
     {
-      "source": "/developer",
-      "destination": "/"
-    },
-    {
       "source": "/developers",
       "destination": "/"
     },
@@ -145,8 +221,336 @@
       "destination": "/"
     },
     {
+      "source": "/workspace",
+      "destination": "/"
+    },
+    {
+      "source": "/workspace/agents",
+      "destination": "/"
+    },
+    {
+      "source": "/workspace/agents/create",
+      "destination": "/"
+    },
+    {
+      "source": "/workspace/agents/:id",
+      "destination": "/"
+    },
+    {
+      "source": "/workspace/models",
+      "destination": "/"
+    },
+    {
+      "source": "/workspace/playground",
+      "destination": "/"
+    },
+    {
+      "source": "/workspace/workflows",
+      "destination": "/"
+    },
+    {
+      "source": "/workspace/workflows/:id",
+      "destination": "/"
+    },
+    {
+      "source": "/workspace/orchestration",
+      "destination": "/"
+    },
+    {
+      "source": "/workspace/knowledge",
+      "destination": "/"
+    },
+    {
+      "source": "/workspace/integrations",
+      "destination": "/"
+    },
+    {
+      "source": "/workspace/approvals",
+      "destination": "/"
+    },
+    {
+      "source": "/workspace/memory",
+      "destination": "/"
+    },
+    {
+      "source": "/workspace/api",
+      "destination": "/"
+    },
+    {
+      "source": "/workspace/usage",
+      "destination": "/"
+    },
+    {
+      "source": "/workspace/monitoring",
+      "destination": "/"
+    },
+    {
+      "source": "/workspace/settings",
+      "destination": "/"
+    },
+    {
+      "source": "/workspace/governance",
+      "destination": "/"
+    },
+    {
+      "source": "/admin/ai-workspace",
+      "destination": "/"
+    },
+    {
+      "source": "/billing/preferences",
+      "destination": "/"
+    },
+    {
+      "source": "/billing",
+      "destination": "/"
+    },
+    {
+      "source": "/checkout",
+      "destination": "/"
+    },
+    {
+      "source": "/subscriptions",
+      "destination": "/"
+    },
+    {
+      "source": "/subscriptions/plans",
+      "destination": "/"
+    },
+    {
+      "source": "/subscriptions/manage",
+      "destination": "/"
+    },
+    {
+      "source": "/billing/invoices",
+      "destination": "/"
+    },
+    {
+      "source": "/billing/invoices/:id",
+      "destination": "/"
+    },
+    {
+      "source": "/billing/transactions",
+      "destination": "/"
+    },
+    {
+      "source": "/billing/refunds",
+      "destination": "/"
+    },
+    {
+      "source": "/portal/billing/payment-methods",
+      "destination": "/"
+    },
+    {
+      "source": "/admin/billing",
+      "destination": "/"
+    },
+    {
+      "source": "/admin/billing/gateways",
+      "destination": "/"
+    },
+    {
+      "source": "/admin/billing/subscriptions",
+      "destination": "/"
+    },
+    {
+      "source": "/admin/billing/refunds",
+      "destination": "/"
+    },
+    {
+      "source": "/admin/billing/promotions",
+      "destination": "/"
+    },
+    {
+      "source": "/admin/billing/disputes",
+      "destination": "/"
+    },
+    {
+      "source": "/admin/billing/settings",
+      "destination": "/"
+    },
+    {
+      "source": "/portal",
+      "destination": "/"
+    },
+    {
+      "source": "/portal/dashboard",
+      "destination": "/"
+    },
+    {
+      "source": "/portal/projects",
+      "destination": "/"
+    },
+    {
+      "source": "/portal/projects/:id",
+      "destination": "/"
+    },
+    {
+      "source": "/portal/proposals",
+      "destination": "/"
+    },
+    {
+      "source": "/portal/documents",
+      "destination": "/"
+    },
+    {
+      "source": "/portal/support",
+      "destination": "/"
+    },
+    {
+      "source": "/portal/settings",
+      "destination": "/"
+    },
+    {
+      "source": "/admin/enterprise",
+      "destination": "/"
+    },
+    {
       "source": "/admin",
       "destination": "/"
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/developer",
+      "destination": "/developers",
+      "permanent": true
+    }
+  ],
+  "headers": [
+    {
+      "source": "/admin",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, follow"
+        }
+      ]
+    },
+    {
+      "source": "/admin/:path*",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, follow"
+        }
+      ]
+    },
+    {
+      "source": "/workspace",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, follow"
+        }
+      ]
+    },
+    {
+      "source": "/workspace/:path*",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, follow"
+        }
+      ]
+    },
+    {
+      "source": "/portal",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, follow"
+        }
+      ]
+    },
+    {
+      "source": "/portal/:path*",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, follow"
+        }
+      ]
+    },
+    {
+      "source": "/billing",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, follow"
+        }
+      ]
+    },
+    {
+      "source": "/billing/:path*",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, follow"
+        }
+      ]
+    },
+    {
+      "source": "/checkout",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, follow"
+        }
+      ]
+    },
+    {
+      "source": "/subscriptions",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, follow"
+        }
+      ]
+    },
+    {
+      "source": "/subscriptions/manage",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, follow"
+        }
+      ]
+    },
+    {
+      "source": "/subscriptions/manage/:path*",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, follow"
+        }
+      ]
+    },
+    {
+      "source": "/support/track",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, follow"
+        }
+      ]
+    },
+    {
+      "source": "/security/admin",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, follow"
+        }
+      ]
+    },
+    {
+      "source": "/enterprise/case-studies",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, follow"
+        }
+      ]
     }
   ]
 }

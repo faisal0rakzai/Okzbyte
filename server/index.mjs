@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { handleResearchAdmin } from './research-admin.mjs';
 import { handleVulnerabilityReport } from './security.mjs';
 import { handleConsultation, handleProjectRequest } from './enterprise.mjs';
+import { isKnownAppPath, isPrivateRoute } from '../src/seo.js';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 const port = Number(process.env.PORT || 3000);
@@ -252,9 +253,16 @@ async function newsletterSubscription(req, res) {
 }
 async function staticFile(pathname, res) {
   const safe = normalize(pathname).replace(/^([.][.][/\\])+/, ''), file = join(root, 'dist', safe === '/' ? 'index.html' : safe);
-  const types = { '.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.css':'text/css; charset=utf-8', '.png':'image/png', '.jpg':'image/jpeg', '.jpeg':'image/jpeg', '.webp':'image/webp', '.avif':'image/avif', '.mp4':'video/mp4', '.svg':'image/svg+xml', '.json':'application/json; charset=utf-8' };
+  const types = { '.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.css':'text/css; charset=utf-8', '.png':'image/png', '.jpg':'image/jpeg', '.jpeg':'image/jpeg', '.webp':'image/webp', '.avif':'image/avif', '.mp4':'video/mp4', '.svg':'image/svg+xml', '.json':'application/json; charset=utf-8', '.xml':'application/xml; charset=utf-8', '.txt':'text/plain; charset=utf-8' };
+  if (isPrivateRoute(pathname)) res.setHeader('x-robots-tag', 'noindex, follow');
   try { const data = await readFile(file); res.writeHead(200, { 'content-type': types[extname(file)] || 'application/octet-stream' }); res.end(data); }
-  catch { try { const data = await readFile(join(root, 'dist', 'index.html')); res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }); res.end(data); } catch { json(res, 404, { ok: false, error: 'not_found' }); } }
+  catch {
+    if (isKnownAppPath(pathname)) {
+      try { const data = await readFile(join(root, 'dist', 'index.html')); res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }); res.end(data); return; } catch {}
+    }
+    try { const data = await readFile(join(root, 'dist', '404.html')); res.writeHead(404, { 'content-type': 'text/html; charset=utf-8', 'x-robots-tag': 'noindex, follow' }); res.end(data); }
+    catch { json(res, 404, { ok: false, error: 'not_found' }); }
+  }
 }
 const server = http.createServer(async (req, res) => {
   security(res);
@@ -278,6 +286,8 @@ const server = http.createServer(async (req, res) => {
   if (req.method === 'POST' && url.pathname === '/api/research/submissions') return researchSubmission(req, res);
   if (req.method === 'POST' && url.pathname === '/api/research/newsletter') return newsletterSubscription(req, res);
   if (req.method === 'OPTIONS') { res.writeHead(204); return res.end(); }
+  if (req.method === 'GET' && url.pathname === '/developer') { res.writeHead(308, { location: '/developers' }); return res.end(); }
+  if (url.pathname.startsWith('/api/')) return json(res, 404, { ok: false, error: 'not_found' });
   return staticFile(url.pathname, res);
 });
 server.listen(port, '0.0.0.0', () => console.log(`OkzByte server listening on ${port}`));

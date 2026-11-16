@@ -114,12 +114,12 @@ export default function PrivacyPage() {
       Object.entries(attrs).forEach(([key, value]) => el.setAttribute(key, value));
     };
     upsert('meta[name="description"]', 'meta', { name: 'description', content: 'Read the OkzByte privacy policy, data practices, privacy rights, and contact details.' });
-    upsert('link[rel="canonical"]', 'link', { rel: 'canonical', href: 'https://okzbyte.com/privacy' });
+    upsert('link[rel="canonical"]', 'link', { rel: 'canonical', href: 'https://okzbyte.vercel.app/privacy' });
     upsert('meta[property="og:title"]', 'meta', { property: 'og:title', content: 'Privacy Policy & Data Protection Center — OkzByte' });
     upsert('meta[property="og:description"]', 'meta', { property: 'og:description', content: 'How OkzByte handles information across its public website, research, and careers features.' });
     let breadcrumb = document.getElementById('okzbyte-privacy-breadcrumb');
     if (!breadcrumb) { breadcrumb = document.createElement('script'); breadcrumb.id = 'okzbyte-privacy-breadcrumb'; breadcrumb.type = 'application/ld+json'; document.head.appendChild(breadcrumb); }
-    breadcrumb.textContent = JSON.stringify({ '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [{ '@type': 'ListItem', position: 1, name: 'Home', item: 'https://okzbyte.com/' }, { '@type': 'ListItem', position: 2, name: 'Privacy Policy', item: 'https://okzbyte.com/privacy' }] });
+    breadcrumb.textContent = JSON.stringify({ '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [{ '@type': 'ListItem', position: 1, name: 'Home', item: 'https://okzbyte.vercel.app/' }, { '@type': 'ListItem', position: 2, name: 'Privacy Policy', item: 'https://okzbyte.vercel.app/privacy' }] });
     return () => breadcrumb.remove();
   }, []);
 

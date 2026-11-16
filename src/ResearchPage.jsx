@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUpRight, Atom, BarChart3, Blocks, BookOpen, Bot, BookMarked, CheckCircle2, ChevronDown, Clipboard, Cloud, FileText, Filter, Globe2, Layers3, LockKeyhole, Mail, Search, ShieldCheck, Sparkles, UserRound, X } from 'lucide-react';
 import './research.css';
 import './research-phase11.css';
+import { DEFAULT_SOCIAL_IMAGE, SITE_ORIGIN } from './seo.js';
 
 const categories = [
   { name: 'Artificial Intelligence', short: 'AI', icon: Bot, blurb: 'LLMs, generative AI, agents, machine learning, AI safety, and intelligent systems.' },
@@ -25,7 +26,7 @@ const zenodo = {
   keywords: ['Cross-chain interoperability', 'Recursive zero-knowledge proofs', 'Formal verification', 'Distributed systems', 'Coq', 'TLA+'],
 };
 
-function Meta({ title, description, image, type = 'website' }) {
+function Meta({ title, description, image, type = 'website', robots = 'index,follow' }) {
   useEffect(() => {
     document.title = title;
     const put = (selector, tag, attrs) => {
@@ -37,13 +38,15 @@ function Meta({ title, description, image, type = 'website' }) {
     put('meta[property="og:title"]', 'meta', { property: 'og:title', content: title });
     put('meta[property="og:description"]', 'meta', { property: 'og:description', content: description });
     put('meta[property="og:type"]', 'meta', { property: 'og:type', content: type });
-    put('meta[property="og:url"]', 'meta', { property: 'og:url', content: window.location.href.split('?')[0] });
+    const canonical = `${SITE_ORIGIN}${window.location.pathname}`;
+    put('meta[property="og:url"]', 'meta', { property: 'og:url', content: canonical });
     put('meta[property="og:site_name"]', 'meta', { property: 'og:site_name', content: 'OkzByte Research' });
-    put('meta[property="og:image"]', 'meta', { property: 'og:image', content: image || 'https://okzbyte.com/og-cover.svg' });
+    put('meta[property="og:image"]', 'meta', { property: 'og:image', content: image || DEFAULT_SOCIAL_IMAGE });
     put('meta[name="twitter:card"]', 'meta', { name: 'twitter:card', content: 'summary_large_image' });
     put('meta[name="twitter:title"]', 'meta', { name: 'twitter:title', content: title });
     put('meta[name="twitter:description"]', 'meta', { name: 'twitter:description', content: description });
-    put('link[rel="canonical"]', 'link', { rel: 'canonical', href: window.location.href.split('?')[0] });
+    put('link[rel="canonical"]', 'link', { rel: 'canonical', href: canonical });
+    put('meta[name="robots"]', 'meta', { name: 'robots', content: robots });
   }, [title, description, image, type]);
   return null;
 }
@@ -154,11 +157,11 @@ function ResearchFooterLinks() { return <nav className="research-related" aria-l
 function ArticlePage({ slug }) {
   const [article, setArticle] = useState(null); const [state, setState] = useState('loading'); const [copied, setCopied] = useState(false); const [light, setLight] = useState(false);
   useEffect(() => { let live = true; setState('loading'); fetch(`/api/research/articles/${encodeURIComponent(slug)}`).then(async r=>{const d=await r.json();if(!r.ok)throw new Error(d.message||'This published article could not be loaded.');return d;}).then(data=>{if(live){setArticle({...data.article,related:data.related||[],sources:data.sources||[]});setState('ready');}}).catch(()=>{if(live){setArticle(null);setState('error');}});return()=>{live=false}; }, [slug]);
-  useEffect(() => { if (!article) return; const title = `${article.seo_title || article.title} | OkzByte Research`; const description = article.seo_description || article.abstract || article.excerpt || 'A published article from OkzByte Research.'; document.title=title; document.querySelector('meta[name="description"]')?.setAttribute('content',description); document.querySelector('meta[property="og:title"]')?.setAttribute('content',title); document.querySelector('meta[property="og:description"]')?.setAttribute('content',description); document.querySelector('meta[property="og:type"]')?.setAttribute('content','article'); const ldId='research-article-jsonld';let ld=document.getElementById(ldId);if(!ld){ld=document.createElement('script');ld.id=ldId;ld.type='application/ld+json';document.head.appendChild(ld);}ld.textContent=JSON.stringify({'@context':'https://schema.org','@type':'ScholarlyArticle',headline:article.title,description,author:article.author?{'@type':'Person',name:article.author}:undefined,datePublished:article.published_at,dateModified:article.updated_at,identifier:article.doi,url:window.location.href.split('?')[0],publisher:{'@type':'Organization',name:'OkzByte Research'}});let crumbId='research-breadcrumb-jsonld';let crumb=document.getElementById(crumbId);if(!crumb){crumb=document.createElement('script');crumb.id=crumbId;crumb.type='application/ld+json';document.head.appendChild(crumb);}crumb.textContent=JSON.stringify({'@context':'https://schema.org','@type':'BreadcrumbList','itemListElement':[{'@type':'ListItem',position:1,name:'Research',item:'https://okzbyte.com/research'},{'@type':'ListItem',position:2,name:article.title,item:window.location.href.split('?')[0]}]}); return()=>{ld.remove();crumb.remove()}; }, [article]);
+  useEffect(() => { if (!article) return; const title = `${article.seo_title || article.title} | OkzByte Research`; const description = article.seo_description || article.abstract || article.excerpt || 'A published article from OkzByte Research.'; document.title=title; document.querySelector('meta[name="description"]')?.setAttribute('content',description); document.querySelector('meta[property="og:title"]')?.setAttribute('content',title); document.querySelector('meta[property="og:description"]')?.setAttribute('content',description); document.querySelector('meta[property="og:type"]')?.setAttribute('content','article'); const ldId='research-article-jsonld';let ld=document.getElementById(ldId);if(!ld){ld=document.createElement('script');ld.id=ldId;ld.type='application/ld+json';document.head.appendChild(ld);}ld.textContent=JSON.stringify({'@context':'https://schema.org','@type':'ScholarlyArticle',headline:article.title,description,author:article.author?{'@type':'Person',name:article.author}:undefined,datePublished:article.published_at,dateModified:article.updated_at,identifier:article.doi,url:`${SITE_ORIGIN}${window.location.pathname}`,publisher:{'@type':'Organization',name:'OkzByte Research'}});let crumbId='research-breadcrumb-jsonld';let crumb=document.getElementById(crumbId);if(!crumb){crumb=document.createElement('script');crumb.id=crumbId;crumb.type='application/ld+json';document.head.appendChild(crumb);}crumb.textContent=JSON.stringify({'@context':'https://schema.org','@type':'BreadcrumbList','itemListElement':[{'@type':'ListItem',position:1,name:'Research',item:'https://okzbyte.vercel.app/research'},{'@type':'ListItem',position:2,name:article.title,item:`${SITE_ORIGIN}${window.location.pathname}`}]}); return()=>{ld.remove();crumb.remove()}; }, [article]);
   const toc = useMemo(()=>String(article?.content||'').split('\n').filter(line=>/^#{1,3}\s+/.test(line)).map(line=>line.replace(/^#{1,3}\s+/,'').trim()),[article]);
   async function share() { try { await navigator.clipboard.writeText(window.location.href); setCopied(true); setTimeout(()=>setCopied(false),1800); } catch { window.prompt('Copy this article link',window.location.href); } }
   if(state==='loading')return <main className="article-page"><Meta title="Research article | OkzByte Research" description="Read published research from OkzByte."/><div className="research-state"><span className="research-spinner"/><div><b>Loading publication</b><p>Checking the published CMS record…</p></div></div></main>;
-  if(state==='error'||!article)return <main className="article-page"><Meta title="Research not found | OkzByte Research" description="This publication is unavailable or not published."/><div className="article-not-found"><Headerline number="404">PUBLICATION UNAVAILABLE</Headerline><h1>This research item<br/><span>is not published.</span></h1><p>Only published CMS items can be opened. The requested record may not exist or may not be public.</p><a className="research-button research-button-green" href="/research"><ArrowLeft size={14}/> Return to Research</a></div></main>;
+  if(state==='error'||!article)return <main className="article-page"><Meta title="Research not found | OkzByte Research" description="This publication is unavailable or not published." robots="noindex,follow"/><div className="article-not-found"><Headerline number="404">PUBLICATION UNAVAILABLE</Headerline><h1>This research item<br/><span>is not published.</span></h1><p>Only published CMS items can be opened. The requested record may not exist or may not be public.</p><a className="research-button research-button-green" href="/research"><ArrowLeft size={14}/> Return to Research</a></div></main>;
   const abstract=article.abstract||article.excerpt;
   const text=String(article.content||'');
   const references=Array.isArray(article.references_json)?article.references_json:[];

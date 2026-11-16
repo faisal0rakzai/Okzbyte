@@ -7,6 +7,8 @@
     "dev": "vite --host 0.0.0.0",
     "build": "vite build",
     "preview": "vite preview --host 0.0.0.0",
+    "test:seo": "node scripts/verify-seo.mjs && node scripts/verify-seo-headings.mjs",
+    "typecheck:seo": "tsc --noEmit --allowJs --checkJs --skipLibCheck --target ES2022 --module ESNext --moduleResolution Bundler src/seo.js",
     "server": "node server/index.mjs",
     "start": "node server/index.mjs"
   },

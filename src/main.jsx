@@ -9,6 +9,9 @@ import './security.css';
 import './enterprise.css';
 import './billing.css';
 import './ai-workspace.css';
+import './not-found.css';
+import NotFoundPage from './NotFoundPage.jsx';
+import { DEFAULT_SOCIAL_IMAGE, SITE_ORIGIN, getPageSEO, isKnownAppPath } from './seo.js';
 import AIWorkspacePage from './AIWorkspacePage.jsx';
 import BillingPage from './BillingPage.jsx';
 import EnterprisePage from './EnterprisePage.jsx';
@@ -59,42 +62,6 @@ function Contact(){return <ContactPage/>;}
 function Admin(){const [health,setHealth]=useState(null);useEffect(()=>{fetch('/api/health').then(r=>r.json()).then(setHealth).catch(()=>setHealth({ok:false,error:'backend_unavailable'}))},[]);const modules=[['Overview','Verified metrics only'],['Content management','Technologies, solutions, products'],['Research','Draft and published articles'],['Contact inbox','Inquiry workflow'],['Media library','Images and alt text'],['SEO settings','Titles and canonical URLs'],['Account settings','Secure administrator provisioning']];return <><div className="admin-shell"><aside className="admin-sidebar"><a className="brand" href="/"><img src="/logo.png" alt="OkzByte logo"/><span>OKZBYTE</span></a><div className="admin-label">CONTROL ROOM</div><nav>{modules.map(([name,desc],i)=><a href="#" key={name} className={i===0?'active':''}><span className="admin-index">0{i+1}</span><span><b>{name}</b><small>{desc}</small></span></a>)}</nav><a className="admin-back" href="/">← Back to website</a></aside><section className="admin-main"><div className="admin-top"><div><SectionLabel>PRIVATE ADMINISTRATION</SectionLabel><h1>OkzByte <span>Control Room.</span></h1></div><div className="admin-user">ADMIN ACCESS<br/><b>PROVISIONING REQUIRED</b></div></div><div className="admin-alert"><ShieldCheck size={20}/><div><b>Secure setup status</b><p>This dashboard will remain locked until server-side administrator provisioning and a database connection are configured. No credentials or fake metrics are exposed in this prototype.</p></div></div><div className="admin-grid"><div className="admin-card admin-wide"><div className="admin-card-head"><span>PLATFORM HEALTH</span><span className={health?.ok?'health-ok':'health-wait'}>{health?.ok?'CHECKED':'WAITING FOR API'}</span></div><div className="health-row"><div><small>API status</small><strong>{health?.ok?'Operational':'Not connected'}</strong></div><div><small>Database</small><strong>{health?.databaseConfigured?'Configured':'Configuration required'}</strong></div><div><small>Admin auth</small><strong>{health?.adminConfigured?'Provisioned':'Provisioning required'}</strong></div></div></div>{modules.slice(1,7).map(([name,desc],i)=><div className="admin-card" key={name}><span className="admin-card-no">MODULE / 0{i+2}</span><h3>{name}</h3><p>{desc}</p><span className="module-status">READY FOR CONFIGURATION <ArrowUpRight size={14}/></span></div>)}</div></section></div></>}
 
 function Legal({kind}){return <><PageHero eyebrow={kind==='privacy'?'LEGAL / PRIVACY':'LEGAL / TERMS'} title={kind==='privacy'?'Privacy, with clarity.':'Terms for a clear relationship.'} body="This placeholder policy is prepared for the initial website experience and should be reviewed with qualified legal counsel before production launch."/><main><section className="section legal"><h2>{kind==='privacy'?'Privacy Policy':'Terms of Service'}</h2>{['Introduction','Information we collect','How information is used','Your choices and rights','Contact and updates'].map((x,i)=><div key={x}><h3>{String(i+1).padStart(2,'0')} / {x}</h3><p>OkzByte is committed to clear, responsible digital experiences. This section will contain the finalized {kind==='privacy'?'privacy policy':'terms of service'} once the site is prepared for public operation. No claims about data processing, commercial services, or account functionality are made by this prototype.</p></div>)}</section></main></>}
-const seo = {
-  '/': ['OkzByte — Engineering Intelligence', 'OkzByte builds intelligent technologies, decentralized systems and digital infrastructure for the next generation of innovation.'],
-  '/about': ['About OkzByte — Engineering Digital Intelligence', 'Discover OkzByte’s story, mission, vision, technology fields, principles, ecosystem initiatives, and founder.'],
-  '/technologies': ['Technologies | AI, Blockchain, Web3 & Digital Infrastructure | OkzByte', 'Explore OkzByte’s technology domains, including artificial intelligence, blockchain, Web3, fintech, real-world assets, cloud infrastructure, data engineering and emerging digital systems.'],
-  '/solutions': ['Technology Solutions | AI, Blockchain, Software & Cloud | OkzByte', 'Discover OkzByte technology solutions across AI, blockchain, Web3, fintech, enterprise software, web and mobile applications, cloud infrastructure and business automation.'],
-  '/products': ['Products & Platforms — OkzByte', 'Product thinking and technology foundations for ambitious digital experiences.'],
-  '/ai-workspace': ['OkzByte AI Workspace | Agents, Automation & Governance', "Create AI agents, orchestrate workflows, connect approved systems, and govern enterprise automation with OkzByte."],
-  '/workspace': ['AI Workspace Dashboard | OkzByte', "Manage agents, workflow automation, knowledge, integrations, approvals, usage, monitoring, and governance."],
-  '/workspace/agents/create': ['Agent Builder | OkzByte AI Workspace', "Configure an AI agent draft with scoped instructions, tools, knowledge, and model settings."],
-  '/workspace/workflows': ['Workflow Automation Builder | OkzByte AI Workspace', "Design reviewable AI automation workflows with connected nodes and explicit execution boundaries."],
-  '/billing': ['OkzByte Billing Center | Payments, Invoices & Subscriptions', "Centralized OkzByte billing, payment records, invoices, subscriptions, refunds, and commercial operations with verified financial states."],
-  '/checkout': ['Secure Checkout | OkzByte Billing', "Secure checkout requires a configured payment provider and server-side payment verification."],
-  '/subscriptions/plans': ['Subscription Plans | OkzByte Billing', "Explore OkzByte subscription plan structures. Pricing and recurring billing activate only after authorized configuration."],
-  '/enterprise': ['OkzByte Enterprise | Business Solutions & Technology Consulting', "Technology solutions, enterprise software, intelligent automation, blockchain infrastructure, and digital transformation capabilities from OkzByte."],
-  '/enterprise/solutions': ['Business Solutions | OkzByte Enterprise', "Explore OkzByte capabilities across AI, Web3, fintech, enterprise software, cloud infrastructure, cybersecurity, and data engineering."],
-  '/enterprise/request-project': ['Request a Project | OkzByte Enterprise', "Submit a private project inquiry to discuss business objectives, requirements, technology, budget, and timing with OkzByte."],
-  '/enterprise/consultation': ['Business Consultation | OkzByte Enterprise', "Request a business consultation with OkzByte. Calendar availability is not displayed until a real provider is configured."],
-  '/portal': ['OkzByte Client Portal | Secure Business Workspace', "A secure client workspace for authorized OkzByte business engagements."],
-  '/security': ['OkzByte Security & Trust Center | Security, Privacy & Transparency', "Explore OkzByte's security practices, data protection approach, blockchain security principles, responsible vulnerability disclosure, and technology transparency."],
-  '/security/overview': ['Security Overview | OkzByte Security & Trust Center', "Evidence-bounded overview of OkzByte application, infrastructure, data, access, API, and response controls."],
-  '/security/vulnerability-disclosure': ['Responsible Disclosure | OkzByte Security & Trust Center', "Privately report suspected OkzByte vulnerabilities and learn responsible disclosure guidelines."],
-  '/developers/api': ['API Security | OkzByte Developers', "Secure API usage guidance, validation, rate limiting, permissions, and secrets handling for OkzByte developers."],
-  '/developers': ['OkzByte Developers | APIs, Tools & Digital Infrastructure', 'Developer resources for building intelligent software, connected systems, and decentralized infrastructure with OkzByte.'],
-  '/developer': ['OkzByte Developers | APIs, Tools & Digital Infrastructure', 'Developer resources for building intelligent software, connected systems, and decentralized infrastructure with OkzByte.'],
-  '/research': ['OkzByte Research | AI, Blockchain, Technology & Digital Infrastructure', 'Explore OkzByte Research for technical papers, original research, analysis and insights across artificial intelligence, blockchain, fintech, Web3 and emerging technologies.'],
-  '/ecosystem': ['OkzByte Ecosystem | AI, Blockchain, Digital Platforms & Ventures', 'Explore the OkzByte and Orakzai ecosystem of technology initiatives, AI research, blockchain platforms, digital identity, fintech, property technology and business ventures.'],
-  '/careers': ['Careers at OkzByte | Build the Future of Technology', 'Join OkzByte as we explore artificial intelligence, blockchain, digital infrastructure and next-generation technology. Discover our culture and future talent opportunities.'],
-  '/contact': ['Contact OkzByte | Business, Support & Partnerships', 'Contact OkzByte about business inquiries, enterprise solutions, partnerships, sales, technical support and media.'],
-  '/support': ['OkzByte Support Center', 'Find verified support information, browse FAQs, submit a support ticket, or track an existing request.'],
-  '/support/faq': ['Support FAQs | OkzByte', 'Answers about contacting OkzByte, technical support, partnerships, careers, privacy and ticket tracking.'],
-  '/support/ticket': ['Submit a Support Ticket | OkzByte', 'Send a support request to OkzByte and receive a unique ticket reference.'],
-  '/support/track': ['Track a Support Ticket | OkzByte', 'Securely check an OkzByte support ticket using its reference and registered email address.'],
-  '/privacy': ['Privacy Policy & Data Protection Center — OkzByte', 'Read the OkzByte privacy policy, data practices, privacy rights, and contact details.'],
-  '/terms': ['Terms of Service — OkzByte Technology', 'Terms governing the OkzByte Technology website, technology information, research and associated resources.'],
-  '/terms-and-conditions': ['Terms of Service — OkzByte Technology', 'Terms governing the OkzByte Technology website, technology information, research and associated resources.']
-};
 function App(){
  const [path,setPath]=useState(window.location.pathname);
  useEffect(()=>{
@@ -110,8 +77,9 @@ function App(){
   return()=>{window.removeEventListener('popstate',on);document.removeEventListener('click',click)}
  },[]);
  useEffect(()=>{
-  const [title,description]=seo[path]||(path.startsWith('/research/')?seo['/research']:seo['/']);
-  let robots=document.head.querySelector('meta[name=robots]');if(!robots){robots=document.createElement('meta');robots.name='robots';document.head.appendChild(robots)}robots.content=path.startsWith('/support/track')?'noindex,nofollow':'index,follow';
+  const pageSEO=getPageSEO(path);
+  const {title,description,canonical,robots:robotsValue}=pageSEO;
+  let robots=document.head.querySelector('meta[name=robots]');if(!robots){robots=document.createElement('meta');robots.name='robots';document.head.appendChild(robots)}robots.content=robotsValue;
   document.title=title;
   const upsert=(selector,tag,attrs)=>{
    let el=document.head.querySelector(selector);
@@ -122,25 +90,26 @@ function App(){
   upsert('meta[property="og:title"]','meta',{property:'og:title',content:title});
   upsert('meta[property="og:description"]','meta',{property:'og:description',content:description});
   upsert('meta[property="og:type"]','meta',{property:'og:type',content:'website'});
-  upsert('meta[property="og:image"]','meta',{property:'og:image',content:'https://okzbyte.vercel.app/og-cover.svg'});
+  upsert('meta[property="og:site_name"]','meta',{property:'og:site_name',content:'OkzByte'});
+  upsert('meta[property="og:image"]','meta',{property:'og:image',content:DEFAULT_SOCIAL_IMAGE});
   upsert('meta[name="twitter:card"]','meta',{name:'twitter:card',content:'summary_large_image'});
   upsert('meta[name="twitter:title"]','meta',{name:'twitter:title',content:title});
   upsert('meta[name="twitter:description"]','meta',{name:'twitter:description',content:description});
-  upsert('meta[name="twitter:image"]','meta',{name:'twitter:image',content:'https://okzbyte.vercel.app/og-cover.svg'});
-  const canonicalPath=path==='/terms'?'/terms-and-conditions':path;
-  const canonicalUrl=canonicalPath==='/technologies'?'https://okzbyte.vercel.app/technologies':`https://okzbyte.com${canonicalPath==='/'?'':canonicalPath}`;
-  upsert('link[rel=canonical]','link',{rel:'canonical',href:canonicalUrl});
-  upsert('meta[property="og:url"]','meta',{property:'og:url',content:canonicalUrl});
+  upsert('meta[name="twitter:image"]','meta',{name:'twitter:image',content:DEFAULT_SOCIAL_IMAGE});
+  const canonicalNode=document.head.querySelector('link[rel=canonical]');
+  if(canonical)upsert('link[rel=canonical]','link',{rel:'canonical',href:canonical});else canonicalNode?.remove();
+  const ogUrlNode=document.head.querySelector('meta[property="og:url"]');
+  if(canonical)upsert('meta[property="og:url"]','meta',{property:'og:url',content:canonical});else ogUrlNode?.remove();
   let ld=document.getElementById('okzbyte-structured-data');
   if(!ld){ld=document.createElement('script');ld.id='okzbyte-structured-data';ld.type='application/ld+json';document.head.appendChild(ld)}
-  ld.textContent=JSON.stringify({'@context':'https://schema.org','@type':'Organization',name:'OkzByte',url:'https://okzbyte.com',description:'Technology venture building intelligent software, decentralized systems and digital infrastructure.',logo:'https://okzbyte.com/logo.png'});
+  ld.textContent=JSON.stringify({'@context':'https://schema.org','@type':'Organization',name:'OkzByte',url:SITE_ORIGIN,description:'Technology venture building intelligent software, decentralized systems and digital infrastructure.',logo:`${SITE_ORIGIN}/logo.png`});
   let pageData=document.getElementById('okzbyte-page-data');
-  if(path==='/technologies'||path==='/research'||path.startsWith('/research/')||path==='/ecosystem'||path==='/careers'){
+  if(canonical&&pageSEO.indexable){
    if(!pageData){pageData=document.createElement('script');pageData.id='okzbyte-page-data';pageData.type='application/ld+json';document.head.appendChild(pageData)}
-   pageData.textContent=JSON.stringify({'@context':'https://schema.org','@type':'WebPage',name:title,description,url:canonicalUrl,publisher:{'@type':'Organization',name:'OkzByte',url:'https://okzbyte.com'},about:(path.startsWith('/research')?['Artificial intelligence','Blockchain technology','Fintech','Real-world assets','Digital infrastructure','Cybersecurity','Emerging technologies','Scientific research']:path==='/ecosystem'?['Artificial intelligence','Blockchain technology','Digital identity','Fintech','PropTech','Business ventures','Community initiatives']:path==='/careers'?['Artificial intelligence','Blockchain technology','Software engineering','Research and development','Talent community']:['Artificial intelligence','Blockchain technology','Web3','Financial technology','Real-world assets','Cloud infrastructure','Data engineering','Cybersecurity','Internet of Things','Robotics and automation']).map(name=>({'@type':'Thing',name}))});
+   pageData.textContent=JSON.stringify({'@context':'https://schema.org','@type':'WebPage',name:title,description,url:canonical,publisher:{'@type':'Organization',name:'OkzByte',url:SITE_ORIGIN}});
   }else if(pageData){pageData.remove()}
  },[path]);
- let content=path==='/'?<Home/>:path==='/ai-workspace'||path.startsWith('/workspace')||path==='/admin/ai-workspace'?<AIWorkspacePage path={path}/>:path.startsWith('/billing')||path==='/checkout'||path.startsWith('/subscriptions')||path==='/admin/billing'?<BillingPage path={path}/>:path.startsWith('/enterprise')||path.startsWith('/portal')||path==='/admin/enterprise'?<EnterprisePage path={path}/>:path.startsWith('/security')?<SecurityCenterPage path={path}/>:path==='/developers/api'?<SecurityCenterPage path="/security/api-security"/>:path==='/about'?<AboutPage/>:path==='/solutions'?<Suspense fallback={<div className="tech-page-loading" aria-label="Loading solutions"/>}><SolutionsPage/></Suspense>:path==='/research'||path.startsWith('/research/')?<Suspense fallback={<div className="tech-page-loading" aria-label="Loading research"/>}><ResearchPage slug={path.startsWith('/research/')?decodeURIComponent(path.slice('/research/'.length).split('/')[0]):''}/></Suspense>:path==='/technologies'?<Suspense fallback={<div className="tech-page-loading" aria-label="Loading technologies"/>}><TechnologiesPage/></Suspense>:path==='/developers'||path==='/developer'?<DevelopersPage/>:path==='/ecosystem'?<Suspense fallback={<div className="tech-page-loading" aria-label="Loading ecosystem"/>}><EcosystemPage/></Suspense>:path==='/careers'?<Suspense fallback={<div className="tech-page-loading" aria-label="Loading careers"/>}><CareersPage/></Suspense>:path==='/terms'||path==='/terms-and-conditions'?<Suspense fallback={<div className="tech-page-loading" aria-label="Loading terms"/>}><TermsPage/></Suspense>:path==='/privacy'?<Suspense fallback={<div className="tech-page-loading" aria-label="Loading privacy policy"/>}><PrivacyPage/></Suspense>:path==='/contact'?<Contact/>:path==='/support'?<SupportHome/>:path==='/support/faq'?<FaqPage/>:path==='/support/ticket'?<TicketPage/>:path==='/support/track'?<TrackPage/>:path==='/admin'?<Suspense fallback={<div className="tech-page-loading" aria-label="Loading research CMS"/>}><ResearchAdmin/></Suspense>:<StandardPage type={path.slice(1) in {solutions:1,products:1,research:1,ecosystem:1}?path.slice(1):'about'}/>;
+ let content=!isKnownAppPath(path)?<NotFoundPage/>:path==='/'?<Home/>:path==='/ai-workspace'||path.startsWith('/workspace')||path==='/admin/ai-workspace'?<AIWorkspacePage path={path}/>:path.startsWith('/billing')||path==='/checkout'||path.startsWith('/subscriptions')||path==='/admin/billing'?<BillingPage path={path}/>:path.startsWith('/enterprise')||path.startsWith('/portal')||path==='/admin/enterprise'?<EnterprisePage path={path}/>:path.startsWith('/security')?<SecurityCenterPage path={path}/>:path==='/developers/api'?<SecurityCenterPage path="/security/api-security"/>:path==='/about'?<AboutPage/>:path==='/solutions'?<Suspense fallback={<div className="tech-page-loading" aria-label="Loading solutions"/>}><SolutionsPage/></Suspense>:path==='/research'||path.startsWith('/research/')?<Suspense fallback={<div className="tech-page-loading" aria-label="Loading research"/>}><ResearchPage slug={path.startsWith('/research/')?decodeURIComponent(path.slice('/research/'.length).split('/')[0]):''}/></Suspense>:path==='/technologies'?<Suspense fallback={<div className="tech-page-loading" aria-label="Loading technologies"/>}><TechnologiesPage/></Suspense>:path==='/developers'?<DevelopersPage/>:path==='/ecosystem'?<Suspense fallback={<div className="tech-page-loading" aria-label="Loading ecosystem"/>}><EcosystemPage/></Suspense>:path==='/careers'?<Suspense fallback={<div className="tech-page-loading" aria-label="Loading careers"/>}><CareersPage/></Suspense>:path==='/terms'||path==='/terms-and-conditions'?<Suspense fallback={<div className="tech-page-loading" aria-label="Loading terms"/>}><TermsPage/></Suspense>:path==='/privacy'?<Suspense fallback={<div className="tech-page-loading" aria-label="Loading privacy policy"/>}><PrivacyPage/></Suspense>:path==='/contact'?<Contact/>:path==='/support'?<SupportHome/>:path==='/support/faq'?<FaqPage/>:path==='/support/ticket'?<TicketPage/>:path==='/support/track'?<TrackPage/>:path==='/admin'?<Suspense fallback={<div className="tech-page-loading" aria-label="Loading research CMS"/>}><ResearchAdmin/></Suspense>:<StandardPage type={path.slice(1) in {solutions:1,products:1,research:1,ecosystem:1}?path.slice(1):'about'}/>;
  return <><ScrollProgress/><Header/>{content}<Footer/></>
 }
 createRoot(document.getElementById('root')).render(<App/>);

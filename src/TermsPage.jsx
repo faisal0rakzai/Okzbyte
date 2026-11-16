@@ -124,12 +124,12 @@ export default function TermsPage() {
       Object.entries(attrs).forEach(([key, value]) => el.setAttribute(key, value));
     };
     upsert('meta[name="description"]', 'meta', { name: 'description', content: 'Terms of Service for the OkzByte Technology website, technology information, research and associated resources.' });
-    upsert('link[rel="canonical"]', 'link', { rel: 'canonical', href: 'https://okzbyte.com/terms-and-conditions' });
+    upsert('link[rel="canonical"]', 'link', { rel: 'canonical', href: 'https://okzbyte.vercel.app/terms-and-conditions' });
     upsert('meta[property="og:title"]', 'meta', { property: 'og:title', content: 'Terms of Service — OkzByte Technology' });
     upsert('meta[property="og:description"]', 'meta', { property: 'og:description', content: 'Clear terms, responsible technology, and transparent digital experiences.' });
     let breadcrumb = document.getElementById('okzbyte-terms-breadcrumb');
     if (!breadcrumb) { breadcrumb = document.createElement('script'); breadcrumb.id = 'okzbyte-terms-breadcrumb'; breadcrumb.type = 'application/ld+json'; document.head.appendChild(breadcrumb); }
-    breadcrumb.textContent = JSON.stringify({ '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [{ '@type': 'ListItem', position: 1, name: 'Home', item: 'https://okzbyte.com/' }, { '@type': 'ListItem', position: 2, name: 'Terms of Service', item: 'https://okzbyte.com/terms-and-conditions' }] });
+    breadcrumb.textContent = JSON.stringify({ '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [{ '@type': 'ListItem', position: 1, name: 'Home', item: 'https://okzbyte.vercel.app/' }, { '@type': 'ListItem', position: 2, name: 'Terms of Service', item: 'https://okzbyte.vercel.app/terms-and-conditions' }] });
     return () => breadcrumb.remove();
   }, []);
 
