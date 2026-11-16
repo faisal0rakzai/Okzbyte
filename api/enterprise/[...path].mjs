@@ -1,4 +1,4 @@
-import { handleConsultation, handleProjectRequest } from '../../../server/enterprise.mjs';
+import { handleConsultation, handleProjectRequest } from '../../server/enterprise.mjs';
 
 export default async function handler(req, res) {
   const path = new URL(req.url, 'http://localhost').pathname;
