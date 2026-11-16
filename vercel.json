@@ -1,6 +1,22 @@
 {
   "rewrites": [
     {
+      "source": "/ai-workspace",
+      "destination": "/"
+    },
+    {
+      "source": "/workspace/:path*",
+      "destination": "/"
+    },
+    {
+      "source": "/workspace",
+      "destination": "/"
+    },
+    {
+      "source": "/admin/ai-workspace",
+      "destination": "/"
+    },
+    {
       "source": "/billing/:path*",
       "destination": "/"
     },

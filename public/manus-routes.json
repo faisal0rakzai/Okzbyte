@@ -33,6 +33,86 @@
       "title": "The Ecosystem"
     },
     {
+      "path": "/ai-workspace",
+      "title": "OkzByte AI Workspace"
+    },
+    {
+      "path": "/workspace",
+      "title": "AI Workspace Dashboard"
+    },
+    {
+      "path": "/workspace/agents",
+      "title": "AI Agents"
+    },
+    {
+      "path": "/workspace/agents/create",
+      "title": "Agent Builder"
+    },
+    {
+      "path": "/workspace/agents/:id",
+      "title": "Agent Detail"
+    },
+    {
+      "path": "/workspace/models",
+      "title": "AI Model Providers"
+    },
+    {
+      "path": "/workspace/playground",
+      "title": "Agent Playground"
+    },
+    {
+      "path": "/workspace/workflows",
+      "title": "Workflow Automation"
+    },
+    {
+      "path": "/workspace/workflows/:id",
+      "title": "Workflow Detail"
+    },
+    {
+      "path": "/workspace/orchestration",
+      "title": "Multi-Agent Orchestration"
+    },
+    {
+      "path": "/workspace/knowledge",
+      "title": "Knowledge Bases & RAG"
+    },
+    {
+      "path": "/workspace/integrations",
+      "title": "Tool Integrations"
+    },
+    {
+      "path": "/workspace/approvals",
+      "title": "Human Approvals"
+    },
+    {
+      "path": "/workspace/memory",
+      "title": "Agent Memory"
+    },
+    {
+      "path": "/workspace/api",
+      "title": "Agent & Workflow API"
+    },
+    {
+      "path": "/workspace/usage",
+      "title": "AI Usage & Billing"
+    },
+    {
+      "path": "/workspace/monitoring",
+      "title": "AI Monitoring"
+    },
+    {
+      "path": "/workspace/settings",
+      "title": "Workspace Settings"
+    },
+    {
+      "path": "/workspace/governance",
+      "title": "AI Governance"
+    },
+    {
+      "path": "/admin/ai-workspace",
+      "title": "AI Workspace Admin"
+    },
+    {
       "path": "/billing/preferences",
       "title": "Billing Preferences"
     },
