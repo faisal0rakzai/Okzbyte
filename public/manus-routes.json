@@ -33,6 +33,10 @@
       "title": "The Ecosystem"
     },
     {
+      "path": "/billing/preferences",
+      "title": "Billing Preferences"
+    },
+    {
       "path": "/billing",
       "title": "OkzByte Billing Center"
     },
