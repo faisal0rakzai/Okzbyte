@@ -1,9 +1,21 @@
 {
   "rewrites": [
-    {"source":"/support/track","destination":"/"},
-    {"source":"/support/ticket","destination":"/"},
-    {"source":"/support/faq","destination":"/"},
-    {"source":"/support","destination":"/"},
+    {
+      "source": "/support/track",
+      "destination": "/"
+    },
+    {
+      "source": "/support/ticket",
+      "destination": "/"
+    },
+    {
+      "source": "/support/faq",
+      "destination": "/"
+    },
+    {
+      "source": "/support",
+      "destination": "/"
+    },
     {
       "source": "/about",
       "destination": "/"
@@ -26,6 +38,14 @@
     },
     {
       "source": "/research",
+      "destination": "/"
+    },
+    {
+      "source": "/developer",
+      "destination": "/"
+    },
+    {
+      "source": "/developers",
       "destination": "/"
     },
     {
