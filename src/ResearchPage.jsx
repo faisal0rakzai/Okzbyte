@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUpRight, Atom, BarChart3, Blocks, BookOpen, Bot, BookMarked, CheckCircle2, ChevronDown, Clipboard, Cloud, FileText, Filter, Globe2, Layers3, LockKeyhole, Mail, Search, ShieldCheck, Sparkles, UserRound, X } from 'lucide-react';
 import './research.css';
 import './research-phase11.css';
@@ -71,9 +71,13 @@ function StoryCard({ article, featured = false }) {
 function VerifiedSpotlight() {
   return <article className="verified-spotlight"><div className="spotlight-image"><LeadArtwork/><span className="spotlight-stamp">IDENTITY<br/>REVIEW</span></div><div className="spotlight-copy"><div className="story-kicker"><span>BLOCKCHAIN &amp; WEB3</span><i>ZENODO DATASET / NOT IMPORTED</i></div><h2>{zenodo.title}</h2><p>{zenodo.abstract}</p><div className="spotlight-meta"><span>Creator label on source <b>{zenodo.author}</b></span><span>Record date <b>{zenodo.date}</b></span><span>DOI <b>{zenodo.doi}</b></span></div><div className="spotlight-actions"><a className="research-button research-button-green" href={zenodo.record} target="_blank" rel="noreferrer">Open source record <ArrowUpRight size={15}/></a><a className="research-text-link" href={zenodo.pdf} target="_blank" rel="noreferrer">Open source PDF <FileText size={14}/></a></div><p className="spotlight-disclaimer">Zenodo metadata confirms this is a dataset and provides an open PDF. Its displayed creator ORCID differs from the ORCID supplied in the brief. Attribution is unresolved: this record remains a draft, is not in the public OkzByte library, and must not be presented as reconciled until Faisal confirms it.</p></div></article>;
 }
-function ResearcherProfilePage() {
-  const [profileData,setProfileData]=useState(null),[booksData,setBooksData]=useState(null);
-  useEffect(()=>{fetch('/api/research/profile').then(r=>r.json()).then(d=>{if(d.ok)setProfileData(d.profile)}).catch(()=>{});fetch('/api/research/books').then(r=>r.json()).then(d=>{if(d.ok)setBooksData(d.items||[])}).catch(()=>{})},[]);
+function ResearcherProfilePage({ initialProfile, initialBooks }) {
+  const [profileData,setProfileData]=useState(initialProfile || null),[booksData,setBooksData]=useState(initialBooks || null);
+  useEffect(()=>{
+    if(initialProfile || initialBooks) return;
+    fetch('/api/research/profile').then(r=>r.json()).then(d=>{if(d.ok)setProfileData(d.profile)}).catch(()=>{});
+    fetch('/api/research/books').then(r=>r.json()).then(d=>{if(d.ok)setBooksData(d.items||[])}).catch(()=>{});
+  },[initialProfile,initialBooks]);
   const interests=['Blockchain architecture','Distributed systems','Artificial intelligence','Smart contracts','Cross-chain interoperability','Digital identity','Real-world asset tokenization'];
   const fallbackBooks=[{title:'The Sovereign Stack',subtitle:'Engineering Next-Generation Blockchain Infrastructure',official_url:'https://faisalorakzai.com/books',description:'Listed on the official researcher Books page.'},{title:'I’m Orakzai',subtitle:'A Journey Through History, Heritage, and the Future',official_url:'https://faisalorakzai.com/books',description:'The title appears on the official Books page; this subtitle was supplied in the project brief and needs edition-level confirmation.'}];
   const books=booksData===null?fallbackBooks:booksData;
@@ -95,14 +99,16 @@ function ResearcherProfilePage() {
   const recordLinks=[['SSRN preprint · 7236718','Blockchain primer; posted 11 Aug 2026; preprint, not a peer-review claim','https://doi.org/10.2139/ssrn.7236718'],['SSRN preprint · 7353660','Credential prototype; posted 27 Aug 2026; benchmark limited to one local environment','https://doi.org/10.2139/ssrn.7353660']];
   return <main className="researcher-profile-page"><Meta title="Faisal Orakzai | OkzByte Research" description="Researcher profile and verified public research links for Faisal Orakzai."/><div className="researcher-profile-hero"><div className="researcher-profile-copy"><Headerline number="PROFILE">RESEARCHER / FAISAL ORAKZAI</Headerline><h1>Research across<br/><span>systems and infrastructure.</span></h1><p>{biography}</p><div className="profile-topics">{topics.map(x=><span key={x}>{x}</span>)}</div></div><div className="researcher-profile-image"><img src="/faisal-orakzai.jpg" alt="Faisal Orakzai"/><span>PUBLIC PROFILE / SOURCE-LINKED</span></div></div><section className="profile-source-section"><Headerline number="01">PUBLIC RESEARCH PROFILES</Headerline><h2>Follow each record<br/><span>to its source.</span></h2><div className="profile-source-grid">{[...sourcedProfiles,...recordLinks].map(([name,note,url])=><a key={name} href={url} target="_blank" rel="noreferrer"><span>{name.toUpperCase()}</span><p>{note}</p><b>Open source <ArrowUpRight size={14}/></b></a>)}</div><p className="profile-caveat">The public ORCID page lists three work groups; two SSRN preprints are cross-platform duplicates. ResearchGate’s visible count includes duplicates and a book item. Counts are not treated as unique peer-reviewed publications. No academic degree, institutional appointment, or citation/follower metrics are asserted here.</p></section><section className="profile-books" id="books"><Headerline number="02">BOOKS &amp; PUBLICATIONS</Headerline><h2>Books, kept<br/><span>separate from papers.</span></h2><div className="profile-book-grid">{books.map(book=><article key={book.id||book.title}><BookMarked size={20}/><span>BOOK / OFFICIAL SITE LISTING</span><h3>{book.title}</h3>{book.subtitle&&<p>{book.subtitle}</p>}{book.description&&<p className="profile-book-description">{book.description}</p>}<small>{book.isbn?`ISBN ${book.isbn}`:book.title==='The Sovereign Stack'?'Official source lists ISBN as pending.':'Listed separately from academic papers.'}</small><a href={book.official_url||book.href||'https://faisalorakzai.com/books'} target="_blank" rel="noreferrer">Official book listing <ArrowUpRight size={14}/></a></article>)}</div></section><section className="profile-library-cta"><UserRound size={20}/><div><h2>Browse source-verified research</h2><p>Research listings distinguish preprints, official technical articles, and records needing author review.</p></div><a className="research-button research-button-green" href="/research">Open research library <ArrowRight size={14}/></a></section><ResearchFooterLinks/></main>;
 }
-function ExploreContent() {
+function ExploreContent({ initialResult }) {
   const [params, setParams] = useState({ q: '', category: '', contentType: '', platform: '', year: '', author: '', sort: 'latest', page: 1 });
   const [activeTab, setActiveTab] = useState('all');
   const [draftQuery, setDraftQuery] = useState('');
-  const [result, setResult] = useState(null);
-  const [state, setState] = useState('loading');
+  const [result, setResult] = useState(initialResult || null);
+  const [state, setState] = useState(initialResult ? 'ready' : 'loading');
   const [refresh, setRefresh] = useState(0);
+  const skipInitialFetch = useRef(Boolean(initialResult));
   useEffect(() => {
+    if (skipInitialFetch.current) { skipInitialFetch.current = false; return; }
     let live = true; setState('loading');
     const query = new URLSearchParams(Object.entries(params).filter(([key, value]) => value && !(key === 'page' && value === 1)));
     fetch(`/api/research/articles?${query.toString()}`).then(async response => { const data = await response.json(); if (!response.ok) throw new Error(data.message || data.error || 'Published research is not available.'); return data; }).then(data => { if (live) { setResult(data); setState('ready'); } }).catch(err => { if (live) { setResult(null); setState('error'); } });
@@ -154,10 +160,42 @@ function NewsletterForm() {
   return <form className="newsletter-form" onSubmit={submit}><label>Email address<input name="email" type="email" autoComplete="email" placeholder="you@example.com" required maxLength="254"/></label><details><summary>Optional topic preferences <ChevronDown size={14}/></summary><div>{categories.map(x=><label key={x.name}><input type="checkbox" name="topics" value={x.name}/>{x.name}</label>)}</div></details><label className="research-consent"><input name="consent" type="checkbox" required/><span>I consent to receive research updates. Email delivery will start only after a confirmation flow is configured.</span></label><button className="research-button research-button-green" disabled={state==='sending'}>{state==='sending'?'Saving…':'Request subscription'} <ArrowRight size={14}/></button>{state==='pending'&&<p className="form-confirm" role="status">Your request is recorded as pending. You are not subscribed until confirmation is available.</p>}{state==='error'&&<p className="form-error" role="alert">{error}</p>}</form>;
 }
 function ResearchFooterLinks() { return <nav className="research-related" aria-label="Explore OkzByte"><a href="/technologies">Technologies <ArrowUpRight size={14}/></a><a href="/solutions">Solutions <ArrowUpRight size={14}/></a><a href="/about">About OkzByte <ArrowUpRight size={14}/></a><a href="/contact">Research collaboration <ArrowUpRight size={14}/></a></nav>; }
-function ArticlePage({ slug }) {
-  const [article, setArticle] = useState(null); const [state, setState] = useState('loading'); const [copied, setCopied] = useState(false); const [light, setLight] = useState(false);
-  useEffect(() => { let live = true; setState('loading'); fetch(`/api/research/articles/${encodeURIComponent(slug)}`).then(async r=>{const d=await r.json();if(!r.ok)throw new Error(d.message||'This published article could not be loaded.');return d;}).then(data=>{if(live){setArticle({...data.article,related:data.related||[],sources:data.sources||[]});setState('ready');}}).catch(()=>{if(live){setArticle(null);setState('error');}});return()=>{live=false}; }, [slug]);
-  useEffect(() => { if (!article) return; const title = `${article.seo_title || article.title} | OkzByte Research`; const description = article.seo_description || article.abstract || article.excerpt || 'A published article from OkzByte Research.'; document.title=title; document.querySelector('meta[name="description"]')?.setAttribute('content',description); document.querySelector('meta[property="og:title"]')?.setAttribute('content',title); document.querySelector('meta[property="og:description"]')?.setAttribute('content',description); document.querySelector('meta[property="og:type"]')?.setAttribute('content','article'); const ldId='research-article-jsonld';let ld=document.getElementById(ldId);if(!ld){ld=document.createElement('script');ld.id=ldId;ld.type='application/ld+json';document.head.appendChild(ld);}ld.textContent=JSON.stringify({'@context':'https://schema.org','@type':'ScholarlyArticle',headline:article.title,description,author:article.author?{'@type':'Person',name:article.author}:undefined,datePublished:article.published_at,dateModified:article.updated_at,identifier:article.doi,url:`${SITE_ORIGIN}${window.location.pathname}`,publisher:{'@type':'Organization',name:'OkzByte Research'}});let crumbId='research-breadcrumb-jsonld';let crumb=document.getElementById(crumbId);if(!crumb){crumb=document.createElement('script');crumb.id=crumbId;crumb.type='application/ld+json';document.head.appendChild(crumb);}crumb.textContent=JSON.stringify({'@context':'https://schema.org','@type':'BreadcrumbList','itemListElement':[{'@type':'ListItem',position:1,name:'Research',item:'https://okzbyte.vercel.app/research'},{'@type':'ListItem',position:2,name:article.title,item:`${SITE_ORIGIN}${window.location.pathname}`}]}); return()=>{ld.remove();crumb.remove()}; }, [article]);
+function ArticlePage({ slug, initialArticle }) {
+  const [article, setArticle] = useState(initialArticle ? {...initialArticle} : null); const [state, setState] = useState(initialArticle ? 'ready' : 'loading'); const [copied, setCopied] = useState(false); const [light, setLight] = useState(false);
+  useEffect(() => {
+    if (initialArticle) return;
+    let live = true; setState('loading');
+    fetch(`/api/research/articles/${encodeURIComponent(slug)}`).then(async r=>{const d=await r.json();if(!r.ok)throw new Error(d.message||'This published article could not be loaded.');return d;}).then(data=>{if(live){setArticle({...data.article,related:data.related||[],sources:data.sources||[]});setState('ready');}}).catch(()=>{if(live){setArticle(null);setState('error');}});
+    return()=>{live=false};
+  }, [slug,initialArticle]);
+  useEffect(() => {
+    if (!article) return;
+    const title = `${article.seo_title || article.title} | OkzByte Research`;
+    const description = article.seo_description || article.abstract || article.excerpt || 'A published article from OkzByte Research.';
+    document.title=title;
+    document.querySelector('meta[name="description"]')?.setAttribute('content',description);
+    document.querySelector('meta[property="og:title"]')?.setAttribute('content',title);
+    document.querySelector('meta[property="og:description"]')?.setAttribute('content',description);
+    document.querySelector('meta[property="og:type"]')?.setAttribute('content',article.catalogue_only?'website':'article');
+    const ldId='research-article-jsonld';
+    let ld=document.getElementById(ldId);
+    if(article.catalogue_only){ld?.remove();ld=null;}
+    else {
+      if(!ld){ld=document.createElement('script');ld.id=ldId;ld.type='application/ld+json';document.head.appendChild(ld);}
+      const schema={'@context':'https://schema.org','@type':'Article','@id':`${SITE_ORIGIN}${window.location.pathname}#article`,headline:article.title,description,url:`${SITE_ORIGIN}${window.location.pathname}`,publisher:{'@type':'Organization','@id':`${SITE_ORIGIN}/#organization`,name:'OkzByte'}};
+      if(article.author)schema.author={'@type':'Person',name:article.author};
+      if(article.published_at&&!Number.isNaN(new Date(article.published_at).valueOf()))schema.datePublished=new Date(article.published_at).toISOString();
+      if(article.updated_at&&!Number.isNaN(new Date(article.updated_at).valueOf()))schema.dateModified=new Date(article.updated_at).toISOString();
+      if(article.doi)schema.identifier=String(article.doi);
+      if(article.cover_image_url&&/^https:\/\//i.test(article.cover_image_url))schema.image=article.cover_image_url;
+      ld.textContent=JSON.stringify(schema);
+    }
+    const crumbId='research-breadcrumb-jsonld';
+    let crumb=document.getElementById(crumbId);
+    if(!crumb){crumb=document.createElement('script');crumb.id=crumbId;crumb.type='application/ld+json';document.head.appendChild(crumb);}
+    crumb.textContent=JSON.stringify({'@context':'https://schema.org','@type':'BreadcrumbList','itemListElement':[{'@type':'ListItem',position:1,name:'Home',item:`${SITE_ORIGIN}/`},{'@type':'ListItem',position:2,name:'Research',item:`${SITE_ORIGIN}/research`},{'@type':'ListItem',position:3,name:article.title,item:`${SITE_ORIGIN}${window.location.pathname}`}]});
+    return()=>{ld?.remove();crumb.remove()};
+  }, [article]);
   const toc = useMemo(()=>String(article?.content||'').split('\n').filter(line=>/^#{1,3}\s+/.test(line)).map(line=>line.replace(/^#{1,3}\s+/,'').trim()),[article]);
   async function share() { try { await navigator.clipboard.writeText(window.location.href); setCopied(true); setTimeout(()=>setCopied(false),1800); } catch { window.prompt('Copy this article link',window.location.href); } }
   if(state==='loading')return <main className="article-page"><Meta title="Research article | OkzByte Research" description="Read published research from OkzByte."/><div className="research-state"><span className="research-spinner"/><div><b>Loading publication</b><p>Checking the published CMS record…</p></div></div></main>;
@@ -173,4 +211,4 @@ function renderMarkdown(markdown) {
   const flush=()=>{if(list.length){output.push(<ul key={`list-${output.length}`}>{list.map((item,i)=><li key={i}>{item}</li>)}</ul>);list=[];}};
   lines.forEach((line,index)=>{const trimmed=line.trim(); if(!trimmed){flush();return;} if(/^[-*]\s+/.test(trimmed)){list.push(trimmed.replace(/^[-*]\s+/,''));return;} flush(); const heading=trimmed.match(/^(#{1,3})\s+(.+)/); if(heading){const level=heading[1].length;const Tag=`h${level+1}`;const title=heading[2];const id=`article-heading-${lines.slice(0,index).filter(x=>/^#{1,3}\s+/.test(x)).length}`;output.push(<Tag id={id} key={index}>{title}</Tag>);}else output.push(<p key={index}>{trimmed}</p>);}); flush(); return output;
 }
-export default function ResearchPage({ slug }) { return slug === 'profile' ? <ResearcherProfilePage/> : slug ? <ArticlePage slug={slug}/> : <ExploreContent/>; }
+export default function ResearchPage({ slug, initialResult, initialProfile, initialBooks, initialArticle }) { return slug === 'profile' ? <ResearcherProfilePage initialProfile={initialProfile} initialBooks={initialBooks}/> : slug ? <ArticlePage slug={slug} initialArticle={initialArticle}/> : <ExploreContent initialResult={initialResult}/>; }

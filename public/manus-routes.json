@@ -2,7 +2,7 @@
   "routes": [
     {
       "path": "/",
-      "title": "OkzByte — Engineering Intelligence"
+      "title": "OkzByte \u2014 Engineering Intelligence"
     },
     {
       "path": "/about",
@@ -26,7 +26,7 @@
     },
     {
       "path": "/research/profile",
-      "title": "Faisal Orakzai — Researcher Profile"
+      "title": "Faisal Orakzai \u2014 Researcher Profile"
     },
     {
       "path": "/ecosystem",
@@ -309,10 +309,6 @@
       "title": "Security Status Dashboard"
     },
     {
-      "path": "/developers/api",
-      "title": "Developer API Security"
-    },
-    {
       "path": "/developers",
       "title": "OkzByte Developers"
     },
@@ -330,7 +326,7 @@
     },
     {
       "path": "/terms-and-conditions",
-      "title": "Terms of Service — OkzByte Technology"
+      "title": "Terms of Service \u2014 OkzByte Technology"
     },
     {
       "path": "/terms",

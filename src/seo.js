@@ -52,8 +52,8 @@ const pages = {
   '/security/documentation': ['Security Documentation | OkzByte', 'Review versioned OkzByte security documentation and distinguish drafts from verified evidence.', 'Security Documentation.'],
   '/developers/api': ['API Security | OkzByte Developers', 'Secure API usage guidance, validation, rate limiting, permissions and secrets handling for OkzByte developers.', 'API & Developer Security.'],
   '/developers': ['OkzByte Developers | APIs, Tools & Digital Infrastructure', 'Developer resources for building intelligent software, connected systems and decentralized infrastructure with OkzByte.', 'Build What’s Next.'],
-  '/research': ['OkzByte Research | AI, Blockchain, Technology & Digital Infrastructure', 'Explore OkzByte Research for technical papers, original research, analysis and insights across AI, blockchain, fintech, Web3 and emerging technologies.', 'Research Across Systems and Infrastructure.'],
-  '/research/profile': ['Faisal Orakzai | Researcher Profile | OkzByte', 'Explore the researcher profile, research interests and verified public research links for Faisal Orakzai.', 'Faisal Orakzai — Researcher Profile.'],
+  '/research': ['OkzByte Research | AI, Blockchain, Technology & Digital Infrastructure', 'Explore OkzByte Research for technical papers, original research, analysis and insights across AI, blockchain, fintech, Web3 and emerging technologies.', 'Researching the Technologies Defining Tomorrow.'],
+  '/research/profile': ['Faisal Orakzai | Researcher Profile | OkzByte', 'Explore the researcher profile, research interests and verified public research links for Faisal Orakzai.', 'Research across systems and infrastructure.'],
   '/ecosystem': ['OkzByte Ecosystem | AI, Blockchain, Digital Platforms & Ventures', 'Explore the OkzByte and Orakzai ecosystem of technology initiatives, AI research, blockchain platforms and digital technology.', 'One Vision. Multiple Ventures. A Connected Digital Future.'],
   '/careers': ['Careers at OkzByte | Build the Future of Technology', 'Join OkzByte as we explore artificial intelligence, blockchain, digital infrastructure and next-generation technology.', 'Build What Comes Next.'],
   '/contact': ['Contact OkzByte | Business, Support & Partnerships', 'Contact OkzByte about business inquiries, enterprise solutions, partnerships, support and media.', 'Let’s Build Something Together.'],
@@ -128,13 +128,65 @@ function normalizePath(pathname) {
   return withLeadingSlash.length > 1 ? withLeadingSlash.replace(/\/+$/, '') : '/';
 }
 
-/** @param {string} pathname */
-export function getPageSEO(pathname) {
-  const path = normalizePath(pathname);
-  let page = pages[path];
-  if (!page && path.startsWith('/research/') && path.split('/').filter(Boolean).length === 2) {
-    page = pages['/research'];
+/** @param {string} value */
+function safeDescription(value) {
+  const text = String(value || '').replace(/\s+/g, ' ').trim();
+  if (text.length <= 160) return text;
+  const shortened = text.slice(0, 157).replace(/\s+\S*$/, '').trim();
+  return `${shortened || text.slice(0, 157)}…`;
+}
+
+/** @param {unknown} value */
+function safeHttpsUrl(value) {
+  try {
+    const url = new URL(String(value || ''), SITE_ORIGIN);
+    return url.protocol === 'https:' ? url.href : null;
+  } catch {
+    return null;
   }
+}
+
+/** @param {unknown} value */
+function validDate(value) {
+  if (!value) return null;
+  const date = new Date(String(value));
+  return Number.isNaN(date.valueOf()) ? null : date.toISOString();
+}
+
+/**
+ * Resolve visible-route metadata. Dynamic article metadata is indexable only when the matching
+ * public article record is supplied; this keeps a missing/unpublished slug noindex by default.
+ * @param {string} pathname
+ * @param {{researchArticle?: any}} [options]
+ */
+export function getPageSEO(pathname, options = {}) {
+  const path = normalizePath(pathname);
+  const researchArticle = options.researchArticle || null;
+  const isResearchArticlePath = path.startsWith('/research/') && path.split('/').filter(Boolean).length === 2 && path !== '/research/profile';
+  if (isResearchArticlePath) {
+    let slug = path.split('/').at(-1) || '';
+    try { slug = decodeURIComponent(slug); } catch {}
+    if (researchArticle && researchArticle.slug === slug && researchArticle.title) {
+      const title = `${researchArticle.seo_title || researchArticle.title} | OkzByte Research`;
+      const description = safeDescription(researchArticle.seo_description || researchArticle.abstract || researchArticle.excerpt || 'A source-linked research record from OkzByte.');
+      const canonical = `${SITE_ORIGIN}/research/${encodeURIComponent(slug)}`;
+      return {
+        path, title, description, h1: researchArticle.title, canonical,
+        robots: 'index,follow', exists: true, indexable: true,
+        ogType: researchArticle.catalogue_only ? 'website' : 'article',
+        image: safeHttpsUrl(researchArticle.cover_image_url) || DEFAULT_SOCIAL_IMAGE,
+      };
+    }
+    return {
+      path, title: 'Research Not Found | OkzByte',
+      description: 'This research item is unavailable or not publicly published.',
+      h1: 'This research item is not published.', canonical: null,
+      robots: 'noindex,follow', exists: false, indexable: false,
+      ogType: 'website', image: DEFAULT_SOCIAL_IMAGE,
+    };
+  }
+
+  let page = pages[path];
   if (!page && path.startsWith('/enterprise/solutions/')) {
     const detail = solutionSlugs[path.split('/').pop() || ''];
     if (detail) page = [detail[1], detail[2], detail[0]];
@@ -151,7 +203,13 @@ export function getPageSEO(pathname) {
     page = [`${title} | OkzByte`, `Private ${label} page for authorized OkzByte users.`, `${title}.`];
   }
   if (!page) {
-    return { path, title: 'Page Not Found | OkzByte', description: 'The requested OkzByte page could not be found.', h1: 'This page could not be found.', canonical: null, robots: 'noindex,follow', exists: false, indexable: false };
+    return {
+      path, title: 'Page Not Found | OkzByte',
+      description: 'The requested OkzByte page could not be found.',
+      h1: 'This page could not be found.', canonical: null,
+      robots: 'noindex,follow', exists: false, indexable: false,
+      ogType: 'website', image: DEFAULT_SOCIAL_IMAGE,
+    };
   }
   const canonicalPath = path === '/terms' ? '/terms-and-conditions' : path;
   const indexable = !isPrivateRoute(path);
@@ -160,11 +218,100 @@ export function getPageSEO(pathname) {
     title: page[0],
     description: page[1],
     h1: page[2],
-    canonical: `${SITE_ORIGIN}${canonicalPath === '/' ? '/' : canonicalPath}`,
+    canonical: indexable ? `${SITE_ORIGIN}${canonicalPath === '/' ? '/' : canonicalPath}` : null,
     robots: indexable ? 'index,follow' : 'noindex,follow',
     exists: true,
     indexable,
+    ogType: 'website',
+    image: DEFAULT_SOCIAL_IMAGE,
   };
+}
+
+/** @param {string} pathname @param {ReturnType<typeof getPageSEO>} pageSEO @param {{researchArticle?: any, researchProfile?: any}} [context] */
+export function getStructuredData(pathname, pageSEO, context = {}) {
+  const path = normalizePath(pathname);
+  const origin = SITE_ORIGIN;
+  const organizationId = `${origin}/#organization`;
+  const websiteId = `${origin}/#website`;
+  const schemas = /** @type {{id: string, data: any}[]} */ ([
+    { id: 'okzbyte-structured-data', data: {
+      '@context': 'https://schema.org', '@type': 'Organization', '@id': organizationId,
+      name: 'OkzByte', url: origin,
+      description: 'Technology venture building intelligent software, decentralized systems and digital infrastructure.',
+      logo: `${origin}/logo.png`,
+    } },
+    { id: 'okzbyte-website-data', data: {
+      '@context': 'https://schema.org', '@type': 'WebSite', '@id': websiteId,
+      name: 'OkzByte', url: origin, inLanguage: 'en', publisher: { '@id': organizationId },
+    } },
+  ]);
+  const canonical = pageSEO.canonical;
+  if (!canonical || !pageSEO.indexable) return schemas;
+
+  const article = context.researchArticle || null;
+  const profile = context.researchProfile || null;
+  const isArticlePath = path.startsWith('/research/') && path.split('/').filter(Boolean).length === 2 && path !== '/research/profile';
+  let mainEntity = null;
+  if (isArticlePath && article && !article.catalogue_only) {
+    const articleSchema = /** @type {Record<string, any>} */ ({
+      '@context': 'https://schema.org', '@type': 'Article', '@id': `${canonical}#article`,
+      headline: article.title, description: pageSEO.description, url: canonical,
+      publisher: { '@id': organizationId },
+    });
+    if (article.author) articleSchema.author = { '@type': 'Person', name: article.author };
+    const published = validDate(article.published_at);
+    const modified = validDate(article.updated_at);
+    if (published) articleSchema.datePublished = published;
+    if (modified) articleSchema.dateModified = modified;
+    if (article.doi) articleSchema.identifier = String(article.doi);
+    const image = safeHttpsUrl(article.cover_image_url);
+    if (image) articleSchema.image = image;
+    schemas.push({ id: 'research-article-jsonld', data: articleSchema });
+    mainEntity = { '@id': `${canonical}#article` };
+  } else if (path === '/research/profile' && profile?.name) {
+    const personId = `${canonical}#person`;
+    const person = /** @type {Record<string, any>} */ ({ '@context': 'https://schema.org', '@type': 'Person', '@id': personId, name: profile.name, url: canonical });
+    if (profile.biography) person.description = profile.biography;
+    if (profile.orcid) person.identifier = `https://orcid.org/${encodeURIComponent(profile.orcid)}`;
+    const sameAs = [profile.external_profile_url, profile.researchgate_url, profile.zenodo_url, profile.google_scholar_url, profile.linkedin_url, profile.official_research_url].map(safeHttpsUrl).filter(Boolean);
+    if (sameAs.length) person.sameAs = [...new Set(sameAs)];
+    schemas.push({ id: 'okzbyte-person-data', data: person });
+    mainEntity = { '@id': personId };
+  }
+
+  const page = /** @type {Record<string, any>} */ ({
+    '@context': 'https://schema.org', '@type': 'WebPage', '@id': `${canonical}#webpage`,
+    name: pageSEO.title, description: pageSEO.description, url: canonical,
+    inLanguage: 'en', isPartOf: { '@id': websiteId }, publisher: { '@id': organizationId },
+  });
+  if (mainEntity) page.mainEntity = mainEntity;
+  const breadcrumbId = isArticlePath ? 'research-breadcrumb-jsonld'
+    : path === '/privacy' ? 'okzbyte-privacy-breadcrumb'
+    : path === '/terms' || path === '/terms-and-conditions' ? 'okzbyte-terms-breadcrumb'
+    : 'okzbyte-breadcrumb-data';
+  const breadcrumb = path === '/' ? null : buildBreadcrumb(path, pageSEO, isArticlePath, article);
+  if (breadcrumb) page.breadcrumb = { '@id': `${canonical}#breadcrumb` };
+  schemas.push({ id: 'okzbyte-page-data', data: page });
+  if (breadcrumb) schemas.push({ id: breadcrumbId, data: breadcrumb });
+  return schemas;
+}
+
+/** @param {string} pathname @param {ReturnType<typeof getPageSEO>} pageSEO @param {boolean} isArticlePath @param {any} article */
+function buildBreadcrumb(pathname, pageSEO, isArticlePath, article) {
+  const segments = pathname.split('/').filter(Boolean);
+  const items = [{ '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_ORIGIN}/` }];
+  let current = '';
+  for (const [index, segment] of segments.entries()) {
+    current += `/${segment}`;
+    let page = current === pathname ? pageSEO : getPageSEO(current);
+    if (isArticlePath && index === segments.length - 1 && article) {
+      page = { ...page, h1: article.title, canonical: `${SITE_ORIGIN}${pathname}` };
+    }
+    if (!page.canonical) continue;
+    const name = current === pathname ? (article?.title || page.h1 || page.title) : (page.h1 || page.title);
+    items.push({ '@type': 'ListItem', position: items.length + 1, name, item: page.canonical });
+  }
+  return { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: items };
 }
 
 /** @param {string} pathname */
@@ -188,10 +335,10 @@ export const SITEMAP_PATHS = [
   '/enterprise/consultation',
   ...Object.keys(solutionSlugs).map(slug => `/enterprise/solutions/${slug}`),
   ...Object.keys(industrySlugs).map(slug => `/enterprise/industries/${slug}`),
-  '/security', '/security/overview', '/security/application-security', '/security/infrastructure',
+  '/subscriptions/plans', '/security', '/security/overview', '/security/application-security', '/security/infrastructure',
   '/security/data-protection', '/security/identity-access', '/security/smart-contracts',
   '/security/api-security', '/security/vulnerability-disclosure', '/security/incident-response',
-  '/security/trust', '/security/documentation', '/developers', '/developers/api',
+  '/security/trust', '/security/documentation', '/developers',
   '/ecosystem', '/careers', '/contact', '/support', '/support/faq', '/support/ticket',
   '/privacy', '/terms-and-conditions',
 ];

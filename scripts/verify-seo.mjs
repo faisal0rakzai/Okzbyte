@@ -66,17 +66,29 @@ for (const [path, source] of [
   ['/enterprise/case-studies', '/enterprise/case-studies'],
 ]) assert(noindexSources.has(source), `Vercel X-Robots-Tag rule missing for ${path}`);
 assert(!noindexSources.has('/subscriptions/:path*'), 'public subscription plans must not inherit a broad noindex header');
-assert(!sitemapPaths.some(path => /^(\/(admin|workspace|portal|billing|checkout|subscriptions)(\/|$))/.test(path)), 'private application routes leaked into sitemap');
+assert(!sitemapPaths.some(path => path !== '/subscriptions/plans' && /^(\/(admin|workspace|portal|billing|checkout|subscriptions)(\/|$))/.test(path)), 'private application routes leaked into sitemap');
 assert.match(robots, /Sitemap: https:\/\/okzbyte\.vercel\.app\/sitemap\.xml/, 'robots.txt sitemap host is incorrect');
 assert.doesNotMatch(robots, /Disallow:\s*\/(admin|workspace|portal|billing|checkout|subscriptions)(\/|\s|$)/i, 'robots.txt must not block crawlers from seeing noindex directives');
 
 assert.deepEqual(vercel.redirects?.find(rule => rule.source === '/developer'), { source: '/developer', destination: '/developers', permanent: true }, 'singular developer alias must permanently redirect to /developers');
+assert.deepEqual(vercel.redirects?.find(rule => rule.source === '/developers/api'), { source: '/developers/api', destination: '/security/api-security', permanent: true }, 'duplicate developer API page must permanently redirect to its canonical security route');
+assert(!vercel.rewrites.some(rule => rule.source === '/developers/api'), 'redirected developer API alias must not render duplicate content');
+assert(!routeManifest.routes.some(route => route.path === '/developers/api'), 'redirect-only developer API alias must not remain in the route manifest');
 assert(!vercel.rewrites.some(rule => rule.source === '/developer'), 'deprecated developer alias must not render as a duplicate page');
 assert(!vercel.rewrites.some(rule => rule.source === '/enterprise/:path*' || rule.source === '/security/:path*'), 'public route wildcards would swallow Vercel 404s');
+for (const path of SITEMAP_PATHS.filter(path => path !== '/')) {
+  const rule = vercel.rewrites.find(rule => rule.source === path);
+  assert(rule, `public route needs an explicit Vercel static-HTML rewrite: ${path}`);
+  assert.equal(rule.destination, `${path}/index.html`, `public route must serve its prerendered HTML: ${path}`);
+}
+assert.equal(vercel.rewrites.find(rule => rule.source === '/research/:slug')?.destination, '/research/:slug/index.html', 'published research slugs should map to generated static documents; missing files then return 404');
+for (const source of ['/admin', '/admin/:path*', '/workspace', '/workspace/:path*', '/portal', '/portal/:path*', '/billing', '/billing/:path*', '/checkout', '/subscriptions', '/subscriptions/manage', '/subscriptions/manage/:path*', '/security/admin', '/support/track', '/enterprise/case-studies']) {
+  assert.equal(vercel.rewrites.find(rule => rule.source === source)?.destination, '/app-shell.html', `private route must use empty noindex shell: ${source}`);
+}
 assert.match(notFound, /name="robots" content="noindex,follow"/, '404 document must be noindex');
 assert.match(notFound, /Return to OkzByte/, '404 document needs a branded route back home');
 assert.match(serverSource, /res\.writeHead\(404, \{ 'content-type': 'text\/html; charset=utf-8'/, 'Node server must return a real HTTP 404');
-assert.match(serverSource, /isKnownAppPath\(pathname\)/, 'Node server must distinguish app routes from unknown routes');
+assert.match(serverSource, /readFile\(join\(dist, 'app-shell\.html'\)\)/, 'Node server must serve an empty app shell only for private routes');
 assert.match(serverSource, /x-robots-tag', 'noindex, follow'/, 'Node server should send noindex response headers for private routes');
 assert.match(mainSource, /!isKnownAppPath\(path\)\?<NotFoundPage\/>/, 'client router should render a branded 404 for unknown app paths');
 assert.match(securitySource, /SecurityHero showHeading=\{path === '\/security'\}/, 'security section root should own the generic H1');

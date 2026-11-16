@@ -1,5 +1,5 @@
 import React, { lazy, Suspense, useEffect, useState } from 'react';
-import { createRoot } from 'react-dom/client';
+import { createRoot, hydrateRoot } from 'react-dom/client';
 import * as THREE from 'three';
 import { ArrowUpRight, Menu, X, MoveUpRight, Cpu, Blocks, Landmark, Network, Code2, Workflow, ShieldCheck, Scale, Sparkles, Mail, CheckCircle2, Send, MessageCircle, Link2 } from 'lucide-react';
 import { siGithub, siTiktok, siYoutube, siDiscord, siTelegram, siInstagram, siReddit, siX } from 'simple-icons';
@@ -11,7 +11,7 @@ import './billing.css';
 import './ai-workspace.css';
 import './not-found.css';
 import NotFoundPage from './NotFoundPage.jsx';
-import { DEFAULT_SOCIAL_IMAGE, SITE_ORIGIN, getPageSEO, isKnownAppPath } from './seo.js';
+import { DEFAULT_SOCIAL_IMAGE, getPageSEO, getStructuredData, isKnownAppPath } from './seo.js';
 import AIWorkspacePage from './AIWorkspacePage.jsx';
 import BillingPage from './BillingPage.jsx';
 import EnterprisePage from './EnterprisePage.jsx';
@@ -62,22 +62,28 @@ function Contact(){return <ContactPage/>;}
 function Admin(){const [health,setHealth]=useState(null);useEffect(()=>{fetch('/api/health').then(r=>r.json()).then(setHealth).catch(()=>setHealth({ok:false,error:'backend_unavailable'}))},[]);const modules=[['Overview','Verified metrics only'],['Content management','Technologies, solutions, products'],['Research','Draft and published articles'],['Contact inbox','Inquiry workflow'],['Media library','Images and alt text'],['SEO settings','Titles and canonical URLs'],['Account settings','Secure administrator provisioning']];return <><div className="admin-shell"><aside className="admin-sidebar"><a className="brand" href="/"><img src="/logo.png" alt="OkzByte logo"/><span>OKZBYTE</span></a><div className="admin-label">CONTROL ROOM</div><nav>{modules.map(([name,desc],i)=><a href="#" key={name} className={i===0?'active':''}><span className="admin-index">0{i+1}</span><span><b>{name}</b><small>{desc}</small></span></a>)}</nav><a className="admin-back" href="/">← Back to website</a></aside><section className="admin-main"><div className="admin-top"><div><SectionLabel>PRIVATE ADMINISTRATION</SectionLabel><h1>OkzByte <span>Control Room.</span></h1></div><div className="admin-user">ADMIN ACCESS<br/><b>PROVISIONING REQUIRED</b></div></div><div className="admin-alert"><ShieldCheck size={20}/><div><b>Secure setup status</b><p>This dashboard will remain locked until server-side administrator provisioning and a database connection are configured. No credentials or fake metrics are exposed in this prototype.</p></div></div><div className="admin-grid"><div className="admin-card admin-wide"><div className="admin-card-head"><span>PLATFORM HEALTH</span><span className={health?.ok?'health-ok':'health-wait'}>{health?.ok?'CHECKED':'WAITING FOR API'}</span></div><div className="health-row"><div><small>API status</small><strong>{health?.ok?'Operational':'Not connected'}</strong></div><div><small>Database</small><strong>{health?.databaseConfigured?'Configured':'Configuration required'}</strong></div><div><small>Admin auth</small><strong>{health?.adminConfigured?'Provisioned':'Provisioning required'}</strong></div></div></div>{modules.slice(1,7).map(([name,desc],i)=><div className="admin-card" key={name}><span className="admin-card-no">MODULE / 0{i+2}</span><h3>{name}</h3><p>{desc}</p><span className="module-status">READY FOR CONFIGURATION <ArrowUpRight size={14}/></span></div>)}</div></section></div></>}
 
 function Legal({kind}){return <><PageHero eyebrow={kind==='privacy'?'LEGAL / PRIVACY':'LEGAL / TERMS'} title={kind==='privacy'?'Privacy, with clarity.':'Terms for a clear relationship.'} body="This placeholder policy is prepared for the initial website experience and should be reviewed with qualified legal counsel before production launch."/><main><section className="section legal"><h2>{kind==='privacy'?'Privacy Policy':'Terms of Service'}</h2>{['Introduction','Information we collect','How information is used','Your choices and rights','Contact and updates'].map((x,i)=><div key={x}><h3>{String(i+1).padStart(2,'0')} / {x}</h3><p>OkzByte is committed to clear, responsible digital experiences. This section will contain the finalized {kind==='privacy'?'privacy policy':'terms of service'} once the site is prepared for public operation. No claims about data processing, commercial services, or account functionality are made by this prototype.</p></div>)}</section></main></>}
-function App(){
- const [path,setPath]=useState(window.location.pathname);
+function App({ initialPath, initialData } = {}) {
+ const prerender = (() => { if(typeof document==='undefined')return null;const encoded=document.getElementById('root')?.dataset.prerender;if(!encoded)return null;try{return JSON.parse(encoded)}catch{return null} })();
+ const observedPath = initialPath || prerender?.path || (typeof window !== 'undefined' ? window.location.pathname : '/');
+ const firstPath = observedPath === '/developers/api' ? '/security/api-security' : observedPath;
+ const [path,setPath]=useState(firstPath);
+ const initialRoute = useState(() => ({path:firstPath,data:initialData || (prerender?.path===firstPath ? prerender.data : null)}))[0];
+ const data = initialRoute.path===path ? initialRoute.data : null;
  useEffect(()=>{
-  const on=()=>setPath(window.location.pathname);
+  const on=()=>{const observed=window.location.pathname;const next=observed==='/developers/api'?'/security/api-security':observed;if(next!==observed)window.history.replaceState({},'',next);setPath(next)};
+  if(window.location.pathname==='/developers/api')window.history.replaceState({},'','/security/api-security');
   window.addEventListener('popstate',on);
   const click=e=>{
    const a=e.target.closest('a');
    if(a&&a.origin===location.origin&&!a.target&&!a.hash){
-    e.preventDefault();history.pushState({},'',a.pathname);setPath(a.pathname);window.scrollTo(0,0)
+    e.preventDefault();const next=a.pathname==='/developers/api'?'/security/api-security':a.pathname;history.pushState({},'',next);setPath(next);window.scrollTo(0,0)
    }
   };
   document.addEventListener('click',click);
   return()=>{window.removeEventListener('popstate',on);document.removeEventListener('click',click)}
  },[]);
  useEffect(()=>{
-  const pageSEO=getPageSEO(path);
+  const pageSEO=getPageSEO(path,{researchArticle:data?.researchArticle});
   const {title,description,canonical,robots:robotsValue}=pageSEO;
   let robots=document.head.querySelector('meta[name=robots]');if(!robots){robots=document.createElement('meta');robots.name='robots';document.head.appendChild(robots)}robots.content=robotsValue;
   document.title=title;
@@ -85,31 +91,41 @@ function App(){
    let el=document.head.querySelector(selector);
    if(!el){el=document.createElement(tag);document.head.appendChild(el)}
    Object.entries(attrs).forEach(([k,v])=>el.setAttribute(k,v));
+   return el;
   };
-  upsert('meta[name=description]','meta',{name:'description',content:description});
+  upsert('meta[name="description"]','meta',{name:'description',content:description});
   upsert('meta[property="og:title"]','meta',{property:'og:title',content:title});
   upsert('meta[property="og:description"]','meta',{property:'og:description',content:description});
-  upsert('meta[property="og:type"]','meta',{property:'og:type',content:'website'});
+  upsert('meta[property="og:type"]','meta',{property:'og:type',content:pageSEO.ogType||'website'});
   upsert('meta[property="og:site_name"]','meta',{property:'og:site_name',content:'OkzByte'});
-  upsert('meta[property="og:image"]','meta',{property:'og:image',content:DEFAULT_SOCIAL_IMAGE});
+  upsert('meta[property="og:image"]','meta',{property:'og:image',content:pageSEO.image||DEFAULT_SOCIAL_IMAGE});
   upsert('meta[name="twitter:card"]','meta',{name:'twitter:card',content:'summary_large_image'});
   upsert('meta[name="twitter:title"]','meta',{name:'twitter:title',content:title});
   upsert('meta[name="twitter:description"]','meta',{name:'twitter:description',content:description});
-  upsert('meta[name="twitter:image"]','meta',{name:'twitter:image',content:DEFAULT_SOCIAL_IMAGE});
+  upsert('meta[name="twitter:image"]','meta',{name:'twitter:image',content:pageSEO.image||DEFAULT_SOCIAL_IMAGE});
   const canonicalNode=document.head.querySelector('link[rel=canonical]');
   if(canonical)upsert('link[rel=canonical]','link',{rel:'canonical',href:canonical});else canonicalNode?.remove();
   const ogUrlNode=document.head.querySelector('meta[property="og:url"]');
   if(canonical)upsert('meta[property="og:url"]','meta',{property:'og:url',content:canonical});else ogUrlNode?.remove();
-  let ld=document.getElementById('okzbyte-structured-data');
-  if(!ld){ld=document.createElement('script');ld.id='okzbyte-structured-data';ld.type='application/ld+json';document.head.appendChild(ld)}
-  ld.textContent=JSON.stringify({'@context':'https://schema.org','@type':'Organization',name:'OkzByte',url:SITE_ORIGIN,description:'Technology venture building intelligent software, decentralized systems and digital infrastructure.',logo:`${SITE_ORIGIN}/logo.png`});
-  let pageData=document.getElementById('okzbyte-page-data');
-  if(canonical&&pageSEO.indexable){
-   if(!pageData){pageData=document.createElement('script');pageData.id='okzbyte-page-data';pageData.type='application/ld+json';document.head.appendChild(pageData)}
-   pageData.textContent=JSON.stringify({'@context':'https://schema.org','@type':'WebPage',name:title,description,url:canonical,publisher:{'@type':'Organization',name:'OkzByte',url:SITE_ORIGIN}});
-  }else if(pageData){pageData.remove()}
- },[path]);
- let content=!isKnownAppPath(path)?<NotFoundPage/>:path==='/'?<Home/>:path==='/ai-workspace'||path.startsWith('/workspace')||path==='/admin/ai-workspace'?<AIWorkspacePage path={path}/>:path.startsWith('/billing')||path==='/checkout'||path.startsWith('/subscriptions')||path==='/admin/billing'?<BillingPage path={path}/>:path.startsWith('/enterprise')||path.startsWith('/portal')||path==='/admin/enterprise'?<EnterprisePage path={path}/>:path.startsWith('/security')?<SecurityCenterPage path={path}/>:path==='/developers/api'?<SecurityCenterPage path="/security/api-security"/>:path==='/about'?<AboutPage/>:path==='/solutions'?<Suspense fallback={<div className="tech-page-loading" aria-label="Loading solutions"/>}><SolutionsPage/></Suspense>:path==='/research'||path.startsWith('/research/')?<Suspense fallback={<div className="tech-page-loading" aria-label="Loading research"/>}><ResearchPage slug={path.startsWith('/research/')?decodeURIComponent(path.slice('/research/'.length).split('/')[0]):''}/></Suspense>:path==='/technologies'?<Suspense fallback={<div className="tech-page-loading" aria-label="Loading technologies"/>}><TechnologiesPage/></Suspense>:path==='/developers'?<DevelopersPage/>:path==='/ecosystem'?<Suspense fallback={<div className="tech-page-loading" aria-label="Loading ecosystem"/>}><EcosystemPage/></Suspense>:path==='/careers'?<Suspense fallback={<div className="tech-page-loading" aria-label="Loading careers"/>}><CareersPage/></Suspense>:path==='/terms'||path==='/terms-and-conditions'?<Suspense fallback={<div className="tech-page-loading" aria-label="Loading terms"/>}><TermsPage/></Suspense>:path==='/privacy'?<Suspense fallback={<div className="tech-page-loading" aria-label="Loading privacy policy"/>}><PrivacyPage/></Suspense>:path==='/contact'?<Contact/>:path==='/support'?<SupportHome/>:path==='/support/faq'?<FaqPage/>:path==='/support/ticket'?<TicketPage/>:path==='/support/track'?<TrackPage/>:path==='/admin'?<Suspense fallback={<div className="tech-page-loading" aria-label="Loading research CMS"/>}><ResearchAdmin/></Suspense>:<StandardPage type={path.slice(1) in {solutions:1,products:1,research:1,ecosystem:1}?path.slice(1):'about'}/>;
+  const schemas=getStructuredData(path,pageSEO,{researchArticle:data?.researchArticle,researchProfile:data?.researchProfile});
+  const activeIds=new Set();
+  for(const {id,data:schema} of schemas){
+   let node=document.getElementById(id);
+   if(!node){node=document.createElement('script');node.id=id;node.type='application/ld+json';document.head.appendChild(node)}
+   node.textContent=JSON.stringify(schema);activeIds.add(id);
+  }
+  for(const id of ['okzbyte-structured-data','okzbyte-website-data','okzbyte-page-data','okzbyte-breadcrumb-data','okzbyte-privacy-breadcrumb','okzbyte-terms-breadcrumb','okzbyte-person-data','research-article-jsonld','research-breadcrumb-jsonld']){
+   if(!activeIds.has(id))document.getElementById(id)?.remove();
+  }
+ },[path,data]);
+ let content=!isKnownAppPath(path)?<NotFoundPage/>:path==='/'?<Home/>:path==='/ai-workspace'||path.startsWith('/workspace')||path==='/admin/ai-workspace'?<AIWorkspacePage path={path}/>:path.startsWith('/billing')||path==='/checkout'||path.startsWith('/subscriptions')||path==='/admin/billing'?<BillingPage path={path}/>:path.startsWith('/enterprise')||path.startsWith('/portal')||path==='/admin/enterprise'?<EnterprisePage path={path}/>:path.startsWith('/security')?<SecurityCenterPage path={path}/>:path==='/developers/api'?<SecurityCenterPage path="/security/api-security"/>:path==='/about'?<AboutPage/>:path==='/solutions'?<Suspense fallback={<div className="tech-page-loading" aria-label="Loading solutions"/>}><SolutionsPage/></Suspense>:path==='/research'||path.startsWith('/research/')?<Suspense fallback={<div className="tech-page-loading" aria-label="Loading research"/>}><ResearchPage key={path} slug={path.startsWith('/research/')?decodeURIComponent(path.slice('/research/'.length).split('/')[0]):''} initialResult={data?.researchIndex} initialProfile={data?.researchProfile} initialBooks={data?.researchBooks} initialArticle={data?.researchArticle}/></Suspense>:path==='/technologies'?<Suspense fallback={<div className="tech-page-loading" aria-label="Loading technologies"/>}><TechnologiesPage/></Suspense>:path==='/developers'?<DevelopersPage/>:path==='/ecosystem'?<Suspense fallback={<div className="tech-page-loading" aria-label="Loading ecosystem"/>}><EcosystemPage/></Suspense>:path==='/careers'?<Suspense fallback={<div className="tech-page-loading" aria-label="Loading careers"/>}><CareersPage/></Suspense>:path==='/terms'||path==='/terms-and-conditions'?<Suspense fallback={<div className="tech-page-loading" aria-label="Loading terms"/>}><TermsPage/></Suspense>:path==='/privacy'?<Suspense fallback={<div className="tech-page-loading" aria-label="Loading privacy policy"/>}><PrivacyPage/></Suspense>:path==='/contact'?<Contact/>:path==='/support'?<SupportHome/>:path==='/support/faq'?<FaqPage/>:path==='/support/ticket'?<TicketPage/>:path==='/support/track'?<TrackPage/>:path==='/admin'?<Suspense fallback={<div className="tech-page-loading" aria-label="Loading research CMS"/>}><ResearchAdmin/></Suspense>:<StandardPage type={path.slice(1) in {solutions:1,products:1,research:1,ecosystem:1}?path.slice(1):'about'}/>;
  return <><ScrollProgress/><Header/>{content}<Footer/></>
 }
-createRoot(document.getElementById('root')).render(<App/>);
+export {App};
+export default App;
+
+if(typeof document!=='undefined'){
+ const root=document.getElementById('root');
+ if(root?.hasChildNodes())hydrateRoot(root,<App/>);
+ else if(root)createRoot(root).render(<App/>);
+}

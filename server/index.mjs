@@ -252,17 +252,33 @@ async function newsletterSubscription(req, res) {
   }
 }
 async function staticFile(pathname, res) {
-  const safe = normalize(pathname).replace(/^([.][.][/\\])+/, ''), file = join(root, 'dist', safe === '/' ? 'index.html' : safe);
+  const safe = normalize(pathname).replace(/^([.][.][/\\])+/, '');
+  const dist = join(root, 'dist');
+  const relative = safe === '/' ? 'index.html' : safe.replace(/^\/+/, '');
+  const candidates = safe === '/' ? [join(dist, 'index.html')] : [join(dist, relative), join(dist, relative, 'index.html')];
   const types = { '.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.css':'text/css; charset=utf-8', '.png':'image/png', '.jpg':'image/jpeg', '.jpeg':'image/jpeg', '.webp':'image/webp', '.avif':'image/avif', '.mp4':'video/mp4', '.svg':'image/svg+xml', '.json':'application/json; charset=utf-8', '.xml':'application/xml; charset=utf-8', '.txt':'text/plain; charset=utf-8' };
   if (isPrivateRoute(pathname)) res.setHeader('x-robots-tag', 'noindex, follow');
-  try { const data = await readFile(file); res.writeHead(200, { 'content-type': types[extname(file)] || 'application/octet-stream' }); res.end(data); }
-  catch {
-    if (isKnownAppPath(pathname)) {
-      try { const data = await readFile(join(root, 'dist', 'index.html')); res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }); res.end(data); return; } catch {}
-    }
-    try { const data = await readFile(join(root, 'dist', '404.html')); res.writeHead(404, { 'content-type': 'text/html; charset=utf-8', 'x-robots-tag': 'noindex, follow' }); res.end(data); }
-    catch { json(res, 404, { ok: false, error: 'not_found' }); }
+  for (const file of candidates) {
+    try {
+      const data = await readFile(file);
+      res.writeHead(200, { 'content-type': types[extname(file)] || 'application/octet-stream' });
+      res.end(data);
+      return;
+    } catch {}
   }
+  if (isPrivateRoute(pathname)) {
+    try {
+      const data = await readFile(join(dist, 'app-shell.html'));
+      res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'x-robots-tag': 'noindex, follow' });
+      res.end(data);
+      return;
+    } catch {}
+  }
+  try {
+    const data = await readFile(join(dist, '404.html'));
+    res.writeHead(404, { 'content-type': 'text/html; charset=utf-8', 'x-robots-tag': 'noindex, follow' });
+    res.end(data);
+  } catch { json(res, 404, { ok: false, error: 'not_found' }); }
 }
 const server = http.createServer(async (req, res) => {
   security(res);
@@ -287,6 +303,7 @@ const server = http.createServer(async (req, res) => {
   if (req.method === 'POST' && url.pathname === '/api/research/newsletter') return newsletterSubscription(req, res);
   if (req.method === 'OPTIONS') { res.writeHead(204); return res.end(); }
   if (req.method === 'GET' && url.pathname === '/developer') { res.writeHead(308, { location: '/developers' }); return res.end(); }
+  if (req.method === 'GET' && url.pathname === '/developers/api') { res.writeHead(308, { location: '/security/api-security' }); return res.end(); }
   if (url.pathname.startsWith('/api/')) return json(res, 404, { ok: false, error: 'not_found' });
   return staticFile(url.pathname, res);
 });
