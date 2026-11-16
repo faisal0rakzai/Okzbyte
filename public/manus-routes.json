@@ -33,6 +33,74 @@
       "title": "The Ecosystem"
     },
     {
+      "path": "/billing",
+      "title": "OkzByte Billing Center"
+    },
+    {
+      "path": "/checkout",
+      "title": "Secure Checkout"
+    },
+    {
+      "path": "/subscriptions",
+      "title": "Subscriptions"
+    },
+    {
+      "path": "/subscriptions/plans",
+      "title": "Subscription Plans"
+    },
+    {
+      "path": "/subscriptions/manage",
+      "title": "Manage Subscription"
+    },
+    {
+      "path": "/billing/invoices",
+      "title": "Billing Invoices"
+    },
+    {
+      "path": "/billing/invoices/:id",
+      "title": "Invoice Detail"
+    },
+    {
+      "path": "/billing/transactions",
+      "title": "Transaction History"
+    },
+    {
+      "path": "/billing/refunds",
+      "title": "Refund Requests"
+    },
+    {
+      "path": "/portal/billing/payment-methods",
+      "title": "Payment Methods"
+    },
+    {
+      "path": "/admin/billing",
+      "title": "Billing Admin"
+    },
+    {
+      "path": "/admin/billing/gateways",
+      "title": "Payment Gateways"
+    },
+    {
+      "path": "/admin/billing/subscriptions",
+      "title": "Billing Subscriptions"
+    },
+    {
+      "path": "/admin/billing/refunds",
+      "title": "Billing Refunds"
+    },
+    {
+      "path": "/admin/billing/promotions",
+      "title": "Billing Promotions"
+    },
+    {
+      "path": "/admin/billing/disputes",
+      "title": "Billing Disputes"
+    },
+    {
+      "path": "/admin/billing/settings",
+      "title": "Billing Settings"
+    },
+    {
       "path": "/enterprise",
       "title": "OkzByte Enterprise"
     },

@@ -1,6 +1,34 @@
 {
   "rewrites": [
     {
+      "source": "/billing/:path*",
+      "destination": "/"
+    },
+    {
+      "source": "/billing",
+      "destination": "/"
+    },
+    {
+      "source": "/checkout",
+      "destination": "/"
+    },
+    {
+      "source": "/subscriptions/:path*",
+      "destination": "/"
+    },
+    {
+      "source": "/subscriptions",
+      "destination": "/"
+    },
+    {
+      "source": "/admin/billing/:path*",
+      "destination": "/"
+    },
+    {
+      "source": "/admin/billing",
+      "destination": "/"
+    },
+    {
       "source": "/enterprise/:path*",
       "destination": "/"
     },
