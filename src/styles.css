@@ -45,3 +45,11 @@
 .footer-watermark.reveal{animation:none;opacity:0;transform:translateY(34px) translateX(-.02em);transition:opacity .75s ease-out,transform .85s cubic-bezier(.2,.75,.25,1)}
 .footer-watermark.reveal.is-visible{opacity:1;transform:translateY(0) translateX(-.02em)}
 @media(prefers-reduced-motion:reduce){.footer-watermark.reveal,.footer-watermark.reveal.is-visible{transition-duration:.01ms}}
+
+/* Supplied OkzByte mark in the global copyright line. */
+.footer-legal .footer-copyright-mark{width:14px;height:14px;object-fit:contain;vertical-align:-3px;margin-right:7px}
+
+/* Exact supplied wordmark lockup for headers and the footer brand reveal. */
+.brand .brand-mark{width:31px;height:31px;object-fit:contain}
+.brand .brand-wordmark{width:92px;height:22px;object-fit:contain;filter:none}
+.footer-watermark img.footer-watermark-wordmark{width:min(820px,92vw);height:auto;opacity:.72;filter:drop-shadow(0 0 20px rgba(118,245,0,.16));transform:translateY(25%)}

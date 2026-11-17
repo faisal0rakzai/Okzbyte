@@ -238,7 +238,10 @@ export function getStructuredData(pathname, pageSEO, context = {}) {
       '@context': 'https://schema.org', '@type': 'Organization', '@id': organizationId,
       name: 'OkzByte', url: origin,
       description: 'Technology venture building intelligent software, decentralized systems and digital infrastructure.',
-      logo: `${origin}/logo.png`,
+      logo: {
+        '@type': 'ImageObject', url: `${origin}/brand/v2/logo.png`,
+        width: 1280, height: 1280,
+      },
     } },
     { id: 'okzbyte-website-data', data: {
       '@context': 'https://schema.org', '@type': 'WebSite', '@id': websiteId,
