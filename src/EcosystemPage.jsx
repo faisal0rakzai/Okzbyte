@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { ArrowUpRight, Blocks, BrainCircuit, Building2, ChevronRight, ExternalLink, Filter, Globe2, Landmark, Network, Search, ShieldCheck, Sparkles, WalletCards, X } from 'lucide-react';
 import TechEcosystemScene from './TechEcosystemScene.jsx';
+import { COMPANY_DESCRIPTION } from './seo.js';
 import './ecosystem.css';
 
 const projects = [
@@ -40,7 +41,7 @@ export default function EcosystemPage() {
   return <main className="ecosystem-page">
     <section className="ecosystem-hero">
       <div className="ecosystem-hero-grid" />
-      <div className="ecosystem-hero-copy"><SectionLabel>THE ORAKZAI DIGITAL ECOSYSTEM</SectionLabel><h1>One Vision.<br /><em>Multiple Ventures.</em><br />A Connected Digital Future<span className="dot">.</span></h1><p>The Orakzai ecosystem brings together technology platforms, digital infrastructure, financial innovation, AI research, business ventures and community initiatives. Each initiative has its own purpose, while contributing to a broader vision of connected innovation.</p><div className="hero-actions"><a className="button button-primary" href="#map">Explore the Ecosystem <ArrowUpRight size={17} /></a><a className="text-link" href="#initiatives">Discover Our Ventures <ArrowUpRight size={15} /></a></div></div>
+      <div className="ecosystem-hero-copy"><SectionLabel>THE ORAKZAI DIGITAL ECOSYSTEM</SectionLabel><h1>One Vision.<br /><em>Multiple Ventures.</em><br />A Connected Digital Future<span className="dot">.</span></h1><p>{COMPANY_DESCRIPTION} This page maps broader ecosystem context; shared context does not establish common ownership, operations or technical integration.</p><div className="hero-actions"><a className="button button-primary" href="#map">Explore the Ecosystem <ArrowUpRight size={17} /></a><a className="text-link" href="#initiatives">Discover Our Ventures <ArrowUpRight size={15} /></a></div></div>
       <div className="ecosystem-hero-scene"><TechEcosystemScene variant="network" selectedIndex={selected} onSelect={setSelected} label="Interactive 3D map of the Orakzai digital ecosystem" /><div className="scene-caption"><span className="scene-live" /> INTERACTIVE ECOSYSTEM MAP <span>CLICK A NODE TO INSPECT</span></div></div>
     </section>
     <section className="ecosystem-note"><span>POSITIONING NOTE</span><p>These initiatives are shown as ecosystem relationships, not verified technical integrations. Shared context does not necessarily mean common ownership, shared infrastructure or operational integration.</p></section>

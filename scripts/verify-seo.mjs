@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { getPageSEO, isKnownAppPath, isPrivateRoute, SITEMAP_PATHS, SITE_ORIGIN } from '../src/seo.js';
+import { COMPANY_DESCRIPTION, FAISAL_PERSON_ID, getPageSEO, getStructuredData, isKnownAppPath, isPrivateRoute, SITEMAP_PATHS, SITE_ORIGIN } from '../src/seo.js';
 
 const [sitemap, robots, vercelRaw, routeManifestRaw, notFound, serverSource, mainSource, securitySource, enterpriseSource] = await Promise.all([
   readFile(new URL('../public/sitemap.xml', import.meta.url), 'utf8'),
@@ -102,5 +102,41 @@ for (const relative of deprecatedHostFiles) {
   assert(!source.includes(futureDomain), `future custom domain found in current SEO config: ${relative}`);
 }
 assert(!routeManifest.routes.some(route => route.path === '/developer'), 'redirect-only alias must not remain in the app route manifest');
+
+const organizationId = `${SITE_ORIGIN}/#organization`;
+const organization = getStructuredData('/', getPageSEO('/')).find(schema => schema.data['@type'] === 'Organization')?.data;
+assert(organization, 'homepage needs an Organization entity');
+assert.equal(organization['@id'], organizationId, 'Organization ID must remain stable');
+assert.equal(organization.description, COMPANY_DESCRIPTION, 'Organization description must use the approved company description');
+assert.equal(organization.founder?.['@id'], FAISAL_PERSON_ID, 'Organization must reference its sole founder by the stable Person ID');
+for (const unsupported of ['legalName', 'address', 'parentOrganization', 'telephone', 'foundingDate', 'sameAs']) {
+  assert(!(unsupported in organization), `Organization must not include unsupported ${unsupported}`);
+}
+
+const profileSchemas = getStructuredData('/research/profile', getPageSEO('/research/profile'), { researchProfile: {
+  name: 'Faisal Orakzai', orcid: '0000-0000-0000-0000',
+  external_profile_url: 'https://orcid.org/0000-0000-0000-0000',
+  researchgate_url: 'https://www.researchgate.net/profile/Faisal-Orakzai-4',
+  zenodo_url: 'https://zenodo.org/search?q=Faisal%20Orakzai',
+  google_scholar_url: `${SITE_ORIGIN}/`, linkedin_url: null,
+  official_research_url: 'https://faisalorakzai.com/research',
+} });
+const profilePerson = profileSchemas.find(schema => schema.data['@type'] === 'Person')?.data;
+assert(profilePerson, 'research profile needs a Person entity');
+assert.equal(profilePerson['@id'], FAISAL_PERSON_ID, 'Person ID must be stable across routes');
+assert.equal(profilePerson.name, 'Faisal Orakzai');
+assert.equal(profilePerson.jobTitle, 'Founder & CEO');
+assert.equal(profilePerson.worksFor?.['@id'], organizationId, 'Person must reference the existing Organization');
+assert(profilePerson.sameAs.includes('https://orcid.org/0000-0000-0000-0000'), 'valid ORCID must remain in Person sameAs');
+assert(profilePerson.sameAs.includes('https://www.researchgate.net/profile/Faisal-Orakzai-4'), 'verified ResearchGate identity must remain in Person sameAs');
+assert(profilePerson.sameAs.includes('https://faisalorakzai.com/research'), 'verified personal research site must remain in Person sameAs');
+assert(!profilePerson.sameAs.some(url => new URL(url).origin === new URL(SITE_ORIGIN).origin), 'company-origin URLs must not appear in Person sameAs');
+assert(!profilePerson.sameAs.some(url => new URL(url).hostname === 'zenodo.org' && new URL(url).search), 'generic Zenodo search pages must not be treated as a Person identity');
+assert(!profilePerson.sameAs.some(url => /okzbyte/i.test(url)), 'company profiles must not be attributed to the Person');
+const mismatchedProfileSchemas = getStructuredData('/research/profile', getPageSEO('/research/profile'), { researchProfile: { name: 'Another Person' } });
+assert.equal(mismatchedProfileSchemas.filter(schema => schema.data['@type'] === 'Person').length, 0, 'a mismatched profile name must not be emitted as Faisal’s Person entity');
+
+assert.doesNotMatch(mainSource, /Co-Founder|CO-FOUNDER/i, 'Faisal must be presented as the sole Founder & CEO');
+assert.match(mainSource, /founder-role">Founder &amp; CEO/);
 
 console.log(`SEO checks passed: ${sitemapPaths.length} canonical public URLs; ${enterpriseAndSecurityPaths.length} unique enterprise/security metadata records; private noindex, redirect, and 404 checks passed.`);

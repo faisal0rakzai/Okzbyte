@@ -3,7 +3,7 @@ import { createServer as createNetServer } from 'node:net';
 import { spawn } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
 import { setTimeout as delay } from 'node:timers/promises';
-import { getPageSEO, isPrivateRoute, SITEMAP_PATHS, SITE_ORIGIN } from '../src/seo.js';
+import { COMPANY_DESCRIPTION, FAISAL_PERSON_ID, getPageSEO, isPrivateRoute, SITEMAP_PATHS, SITE_ORIGIN } from '../src/seo.js';
 
 const ROOT = process.cwd();
 const USER_AGENT = 'Googlebot/2.1 (+http://www.google.com/bot.html)';
@@ -147,7 +147,33 @@ try {
     assert(schemas.every(schema => schema['@context'] === 'https://schema.org'), `${path} JSON-LD must use Schema.org`);
     assert(!html.includes('SUPABASE_SECRET_KEY') && !html.includes('SUPABASE_SERVICE_ROLE_KEY'), `${path} must not expose server credentials`);
 
-    if (path === '/research/profile') assert.equal(types.filter(type => type === 'Person').length, 1, 'verified researcher profile should include one Person schema');
+    const organization = schemas.find(schema => schema['@type'] === 'Organization');
+    const website = schemas.find(schema => schema['@type'] === 'WebSite');
+    const webPage = schemas.find(schema => schema['@type'] === 'WebPage');
+    const organizationId = `${SITE_ORIGIN}/#organization`;
+    assert.equal(organization?.['@id'], organizationId, `${path} must use the stable Organization ID`);
+    assert.equal(website?.['@id'], `${SITE_ORIGIN}/#website`, `${path} must use the stable WebSite ID`);
+    assert.equal(website?.publisher?.['@id'], organizationId, `${path} WebSite publisher must reference the Organization`);
+    assert.equal(webPage?.publisher?.['@id'], organizationId, `${path} WebPage publisher must reference the Organization`);
+    if (path === '/') {
+      assert.equal(organization?.description, COMPANY_DESCRIPTION, 'homepage Organization must use the approved company description');
+      assert.equal(organization?.founder?.['@id'], FAISAL_PERSON_ID, 'homepage Organization must reference the stable founder Person');
+      for (const unsupported of ['legalName', 'address', 'parentOrganization', 'telephone', 'foundingDate', 'sameAs']) {
+        assert(!(unsupported in organization), `Organization must not emit unsupported ${unsupported}`);
+      }
+    }
+    if (path === '/about') assert.equal(webPage?.publisher?.['@id'], organizationId, 'About WebPage must retain the Organization publisher relationship');
+
+    if (path === '/research/profile') {
+      assert.equal(types.filter(type => type === 'Person').length, 1, 'verified researcher profile should include one Person schema');
+      const person = schemas.find(schema => schema['@type'] === 'Person');
+      assert.equal(person?.['@id'], FAISAL_PERSON_ID, 'raw profile HTML must use the stable Person ID');
+      assert.equal(person?.name, 'Faisal Orakzai', 'raw profile HTML must identify the approved founder');
+      assert.equal(person?.jobTitle, 'Founder & CEO');
+      assert.equal(person?.worksFor?.['@id'], organizationId, 'raw Person must reference the existing Organization');
+      assert(!person?.sameAs?.some(url => new URL(url).origin === new URL(SITE_ORIGIN).origin), 'raw Person sameAs must exclude company-origin URLs');
+      assert(!person?.sameAs?.some(url => new URL(url).hostname === 'zenodo.org' && new URL(url).search), 'raw Person sameAs must exclude generic Zenodo searches');
+    }
     if (articlePaths.includes(path)) {
       const stateMatch = html.match(/<div id="root" data-prerender='([^']*)'>/);
       assert(stateMatch, `${path} must include matching public hydration state on the root element`);

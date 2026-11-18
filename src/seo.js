@@ -1,10 +1,12 @@
 export const SITE_ORIGIN = 'https://okzbyte.vercel.app';
+export const COMPANY_DESCRIPTION = 'OkzByte is a technology company founded by Faisal Orakzai, working across artificial intelligence, software engineering, blockchain technologies and digital infrastructure. OkzByte is associated with the broader Orakzai Group ecosystem.';
+export const FAISAL_PERSON_ID = `${SITE_ORIGIN}/research/profile#person`;
 export const DEFAULT_SOCIAL_IMAGE = `${SITE_ORIGIN}/og-cover.svg`;
 
 /** @type {Record<string, [string, string, string]>} */
 const pages = {
-  '/': ['OkzByte — Engineering Intelligence', 'OkzByte builds intelligent technologies, decentralized systems and digital infrastructure for the next generation of innovation.', 'Engineering Intelligence. Building the Digital Future.'],
-  '/about': ['About OkzByte — Engineering Digital Intelligence', 'Discover OkzByte’s story, mission, technology fields, principles, ecosystem initiatives, and founder.', 'Engineering the Future of Digital Intelligence.'],
+  '/': ['OkzByte — Engineering Intelligence', 'OkzByte, founded by Faisal Orakzai, works across AI, software engineering, blockchain technologies and digital infrastructure.', 'Engineering Intelligence. Building the Digital Future.'],
+  '/about': ['About OkzByte — Engineering Digital Intelligence', 'Meet OkzByte, founded by Faisal Orakzai: a technology company working across AI, software engineering, blockchain and digital infrastructure.', 'Engineering the Future of Digital Intelligence.'],
   '/technologies': ['Technologies | AI, Blockchain, Web3 & Digital Infrastructure | OkzByte', 'Explore OkzByte’s technology domains, including artificial intelligence, blockchain, Web3, fintech, real-world assets, cloud infrastructure, data engineering and emerging digital systems.', 'Engineering the Technologies That Shape Tomorrow.'],
   '/solutions': ['Technology Solutions | AI, Blockchain, Software & Cloud | OkzByte', 'Discover OkzByte technology solutions across AI, blockchain, Web3, fintech, enterprise software, web and mobile applications, cloud infrastructure and business automation.', 'Technology Solutions. Engineered for What’s Next.'],
   '/products': ['Products & Platforms — OkzByte', 'Product thinking and technology foundations for ambitious digital experiences.', 'Products and Platforms at OkzByte.'],
@@ -54,7 +56,7 @@ const pages = {
   '/developers': ['OkzByte Developers | APIs, Tools & Digital Infrastructure', 'Developer resources for building intelligent software, connected systems and decentralized infrastructure with OkzByte.', 'Build What’s Next.'],
   '/research': ['OkzByte Research | AI, Blockchain, Technology & Digital Infrastructure', 'Explore OkzByte Research for technical papers, original research, analysis and insights across AI, blockchain, fintech, Web3 and emerging technologies.', 'Researching the Technologies Defining Tomorrow.'],
   '/research/profile': ['Faisal Orakzai | Researcher Profile | OkzByte', 'Explore the researcher profile, research interests and verified public research links for Faisal Orakzai.', 'Research across systems and infrastructure.'],
-  '/ecosystem': ['OkzByte Ecosystem | AI, Blockchain, Digital Platforms & Ventures', 'Explore the OkzByte and Orakzai ecosystem of technology initiatives, AI research, blockchain platforms and digital technology.', 'One Vision. Multiple Ventures. A Connected Digital Future.'],
+  '/ecosystem': ['OkzByte Ecosystem | AI, Blockchain, Digital Platforms & Ventures', 'OkzByte is associated with the broader Orakzai Group ecosystem; each initiative retains its own identity and operating boundaries.', 'One Vision. Multiple Ventures. A Connected Digital Future.'],
   '/careers': ['Careers at OkzByte | Build the Future of Technology', 'Join OkzByte as we explore artificial intelligence, blockchain, digital infrastructure and next-generation technology.', 'Build What Comes Next.'],
   '/contact': ['Contact OkzByte | Business, Support & Partnerships', 'Contact OkzByte about business inquiries, enterprise solutions, partnerships, support and media.', 'Let’s Build Something Together.'],
   '/support': ['OkzByte Support Center', 'Find verified support information, browse FAQs, submit a support ticket or track an existing request.', 'OkzByte Support Center.'],
@@ -237,7 +239,8 @@ export function getStructuredData(pathname, pageSEO, context = {}) {
     { id: 'okzbyte-structured-data', data: {
       '@context': 'https://schema.org', '@type': 'Organization', '@id': organizationId,
       name: 'OkzByte', url: origin,
-      description: 'Technology venture building intelligent software, decentralized systems and digital infrastructure.',
+      description: COMPANY_DESCRIPTION,
+      founder: { '@id': FAISAL_PERSON_ID },
       logo: {
         '@type': 'ImageObject', url: `${origin}/brand/v2/logo.png`,
         width: 1280, height: 1280,
@@ -271,12 +274,16 @@ export function getStructuredData(pathname, pageSEO, context = {}) {
     if (image) articleSchema.image = image;
     schemas.push({ id: 'research-article-jsonld', data: articleSchema });
     mainEntity = { '@id': `${canonical}#article` };
-  } else if (path === '/research/profile' && profile?.name) {
-    const personId = `${canonical}#person`;
-    const person = /** @type {Record<string, any>} */ ({ '@context': 'https://schema.org', '@type': 'Person', '@id': personId, name: profile.name, url: canonical });
+  } else if (path === '/research/profile' && profile?.name === 'Faisal Orakzai') {
+    const personId = FAISAL_PERSON_ID;
+    const person = /** @type {Record<string, any>} */ ({ '@context': 'https://schema.org', '@type': 'Person', '@id': personId, name: 'Faisal Orakzai', url: canonical, jobTitle: 'Founder & CEO', worksFor: { '@id': organizationId } });
     if (profile.biography) person.description = profile.biography;
     if (profile.orcid) person.identifier = `https://orcid.org/${encodeURIComponent(profile.orcid)}`;
-    const sameAs = [profile.external_profile_url, profile.researchgate_url, profile.zenodo_url, profile.google_scholar_url, profile.linkedin_url, profile.official_research_url].map(safeHttpsUrl).filter(Boolean);
+    const sameAs = [];
+    for (const value of [profile.external_profile_url, profile.researchgate_url, profile.google_scholar_url, profile.linkedin_url, profile.official_research_url]) {
+      const url = safeHttpsUrl(value);
+      if (url && new URL(url).origin !== new URL(origin).origin) sameAs.push(url);
+    }
     if (sameAs.length) person.sameAs = [...new Set(sameAs)];
     schemas.push({ id: 'okzbyte-person-data', data: person });
     mainEntity = { '@id': personId };
